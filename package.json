@@ -1,0 +1,45 @@
+{
+  "name": "fnspm",
+  "module": "index.ts",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "bin": {
+    "fnspm": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "module-alias": "^2.2.3"
+  },
+  "_moduleAliases": {
+    "@": "dist/src"
+  },
+  "files": [
+    "dist"
+  ],
+  "permissions": "755",
+  "license": "GPL-3.0",
+  "private": false,
+  "author": "Serban Marin",
+  "description": "A unified package manager interface - for educational and non-commercial use only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/fnspm"
+  },
+  "keywords": [
+    "package-manager",
+    "npm",
+    "yarn",
+    "pnpm",
+    "bun",
+    "deno",
+    "educational"
+  ]
+}
