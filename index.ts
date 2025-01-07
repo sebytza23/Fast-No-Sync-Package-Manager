@@ -3,7 +3,7 @@
 import 'module-alias/register';
 import { displayHelp } from "@/utils/help";
 import { PackageManagerFactory, VALID_PACKAGE_MANAGERS } from "@/packages/factory";
-import { findPackageManagerLockFile } from "@/utils/helpers";
+import { AddToGitIgnore, findPackageManagerLockFile } from "@/utils/helpers";
 import type { PackageManagerType } from "@/utils/types";
 
 const main = async () => {
@@ -57,6 +57,7 @@ const main = async () => {
     try {
         const pm = PackageManagerFactory(pmType);
         await pm.execute(args);
+        AddToGitIgnore();
     } catch (error) {
         console.error(`Failed to execute command:\n${error}`);
         process.exit(1);

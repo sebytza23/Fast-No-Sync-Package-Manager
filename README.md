@@ -91,7 +91,7 @@ If no package manager is specified, FNSPM will detect it based on lock files:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/fnspm.git
+git clone https://github.com/sebytza23/Fast-No-Sync-Package-Manager.git
 cd fnspm
 
 # Install dependencies using npm

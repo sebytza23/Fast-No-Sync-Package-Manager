@@ -47,4 +47,17 @@ export const shouldCreateSymlink = (): boolean => {
     return !fs.lstatSync(path.join(process.cwd(), 'node_modules')).isSymbolicLink();
 };
 
+export const AddToGitIgnore = (): void => {
+    const gitIgnorePath = path.join(process.cwd(), '.gitignore');
+    const gitIgnoreContent = fs.readFileSync(gitIgnorePath, 'utf8');
+    const gitIgnoreContentArray = gitIgnoreContent.split('\n');
+
+    if (!gitIgnoreContentArray.some((value) => value === "node_modules")) {
+        fs.appendFileSync(gitIgnorePath, '\n# Symlink is not a directory');
+        fs.appendFileSync(gitIgnorePath, '\nnode_modules');
+        fs.appendFileSync(gitIgnorePath, '\nnode_modules.nosync/');
+    }
+    
+};
+
 export { PackageManagerType };

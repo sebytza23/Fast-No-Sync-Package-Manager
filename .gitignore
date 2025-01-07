@@ -57,7 +57,6 @@ build/Release
 # Dependency directories
 
 node_modules/
-node_modules.nosync/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -180,3 +179,7 @@ dist
 
 # Bun cache
 .bun/
+
+# Symlink is not a directory
+node_modules
+node_modules.nosync/
