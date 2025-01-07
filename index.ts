@@ -9,20 +9,17 @@ import type { PackageManagerType } from "@/utils/types";
 const main = async () => {
     const args = process.argv.slice(2);
 
-    // Verificăm dacă există un command
     if (args.length === 0) {
         console.error('Error: No command provided');
         displayHelp();
         process.exit(1);
     }
 
-    // Help
     if (args.includes('help')) {
         displayHelp();
         process.exit(0);
     }
 
-    // Găsim package manager-ul
     let pmType: PackageManagerType;
     const pmFlagIndex = args.findIndex(arg => arg === '--pm');
     

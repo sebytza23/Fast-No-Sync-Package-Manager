@@ -2,7 +2,7 @@
   "name": "fnspm",
   "module": "index.ts",
   "type": "commonjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "devDependencies": {
     "module-alias": "^2.2.3",
     "@types/bun": "latest"
