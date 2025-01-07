@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import 'module-alias/register';
 import { displayHelp } from "@/utils/help";
 import { PackageManagerFactory, VALID_PACKAGE_MANAGERS } from "@/packages/factory";
 import { AddToGitIgnore, findPackageManagerLockFile } from "@/utils/helpers";

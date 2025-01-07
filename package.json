@@ -2,9 +2,9 @@
   "name": "fnspm",
   "module": "index.ts",
   "type": "commonjs",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "devDependencies": {
-    "module-alias": "^2.2.3",
+    "tsc-alias": "^1.8.10",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -14,7 +14,7 @@
     "fnspm": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/index.js"
   },
   "dependencies": {},
