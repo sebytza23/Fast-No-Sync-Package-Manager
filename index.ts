@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { displayHelp } from "@/utils/help";
+import { initialize } from "@/utils/initialize";
 import { PackageManagerFactory, VALID_PACKAGE_MANAGERS } from "@/packages/factory";
-import { AddToGitIgnore, findPackageManagerLockFile } from "@/utils/helpers";
+import { AddToGitIgnore, findPackageManagerLockFile, loadConfig } from "@/utils/helpers";
 import type { PackageManagerType } from "@/utils/types";
 
 const main = async () => {
@@ -14,8 +15,13 @@ const main = async () => {
         process.exit(1);
     }
 
-    if (args.includes('help')) {
+    if (args[0] === 'help') {
         displayHelp();
+        process.exit(0);
+    }
+
+    if (args[0] === 'initialize') {
+        await initialize(args);
         process.exit(0);
     }
 
@@ -44,16 +50,17 @@ const main = async () => {
         }else {
             args.splice(pmFlagIndex, 2);
         }
-        
     } else {
-        pmType = findPackageManagerLockFile();
-        console.info(`No package manager specified, using "${pmType}" based on lock file`);
+        pmType = await findPackageManagerLockFile();
     }
 
     try {
         const pm = PackageManagerFactory(pmType);
         await pm.execute(args);
-        AddToGitIgnore();
+        const config = await loadConfig();
+        if (config.symlink.addToGitIgnore) {
+            AddToGitIgnore();
+        }
     } catch (error) {
         console.error(`Failed to execute command:\n${error}`);
         process.exit(1);
@@ -64,3 +71,7 @@ main().catch(error => {
     console.error(`Fatal error:\n ${error.message}`);
     process.exit(1);
 });
+
+export type {
+    Config
+} from '@/utils/types';

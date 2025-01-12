@@ -12,11 +12,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "declaration": true,
+    "declarationDir": "./dist",
+    "types": ["node"]
   },
   "include": [
     "index.ts",
-    "src/packages/**/*.ts"
+    "src/**/*.ts",
   ],
   "exclude": [
     "node_modules",

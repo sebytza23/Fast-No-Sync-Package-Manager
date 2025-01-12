@@ -183,3 +183,5 @@ dist
 # Symlink is not a directory
 node_modules
 node_modules.nosync/
+
+.npmignore

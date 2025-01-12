@@ -1,4 +1,4 @@
-import { PackageManagerLockFile, PackageManagerName } from "@/utils/types";
+import { PackageManagerType, PackageManagerLockFile } from "@/utils/types";
 import {BunPM} from "./bun";
 import {DenoPM} from "./deno";
 import { NodePM } from "./npm";
@@ -8,7 +8,7 @@ import { YarnPM } from "./yarn";
 
 export const VALID_PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'deno', 'bun'];
 
-export function PackageManagerFactory(packageManager: PackageManagerName | PackageManagerLockFile): PackageManager {
+export function PackageManagerFactory(packageManager: PackageManagerType | PackageManagerLockFile): PackageManager {
     switch (packageManager) {
         case 'npm':
         case 'package-lock.json':
@@ -25,10 +25,6 @@ export function PackageManagerFactory(packageManager: PackageManagerName | Packa
         case 'deno':
         case 'deno.lock':
             return new DenoPM();
-        default:
-            throw new Error(
-                `Unsupported package manager: ${packageManager}\n` +
-                `Valid package managers are: ${VALID_PACKAGE_MANAGERS.join(', ')}`
-            );
+        
     }
 }

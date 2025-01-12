@@ -2,10 +2,11 @@
   "name": "fnspm",
   "module": "index.ts",
   "type": "commonjs",
-  "version": "0.0.4",
+  "version": "0.1.7",
   "devDependencies": {
-    "tsc-alias": "^1.8.10",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "npmignore": "^0.3.1",
+    "tsc-alias": "^1.8.10"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -15,20 +16,24 @@
   },
   "scripts": {
     "build": "tsc && tsc-alias",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepack": "npmignore --auto"
   },
-  "dependencies": {},
+  "dependencies": {
+    "enquirer": "^2.4.1"
+  },
   "_moduleAliases": {
-    "@": "dist/src"
+    "@": "src"
   },
   "files": [
-    "dist"
+    "dist/src/utils/types.d.ts",
+    "dist/**/*.js"
   ],
   "permissions": "755",
   "license": "GPL-3.0",
   "private": false,
   "author": "Marin-Eusebiu Șerban",
-  "description": "A unified package manager interface - for educational and non-commercial use only",
+  "description": "A unified command-line interface for managing packages across multiple package managers (npm, yarn, pnpm, bun, and deno) with macOS optimization for iCloud sync and automatic package manager detection.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sebytza23/Fast-No-Sync-Package-Manager.git"
@@ -42,5 +47,15 @@
     "bun",
     "deno",
     "nosync"
-  ]
+  ],
+  "types": "./dist/src/utils/types.d.ts",
+  "publishConfig": {
+    "ignore": [
+      "!dist/",
+      "!dist/src/utils/types.d.ts",
+      "src/",
+      "test/",
+      "*.ts"
+    ]
+  }
 }

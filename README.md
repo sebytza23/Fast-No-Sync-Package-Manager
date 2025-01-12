@@ -1,6 +1,6 @@
 # FNSPM (Fast No Sync Package Manager)
 
-A unified command-line interface for managing packages across multiple package managers (npm, yarn, pnpm, bun, and deno).
+A unified command-line interface for managing packages across multiple package managers (npm, yarn, pnpm, bun, and deno) with macOS optimization for iCloud sync and automatic package manager detection.
 
 ## Features
 
@@ -14,6 +14,60 @@ A unified command-line interface for managing packages across multiple package m
 
 ```bash
 npm install -g fnspm
+```
+
+## Initialization
+
+```bash
+fnspm initialize [options]
+```
+
+### Initilization Options:
+
+- `--default, -d`: Use default configuration
+- `--pm`: Set default package manager (npm|yarn|pnpm|bun|deno)
+- `--detection`: Set detection mode (auto|default|npm|yarn|pnpm|bun|deno)
+- `--symlink`: Enable/disable symlink creation (true|false)
+- `--no-symlink`: Disable symlink creation
+- `--sync-folder`: Set nosync folder name
+- `--no-sync-folder`: Disable nosync folder creation
+- `--add-to-gitignore`: Add nosync folder to .gitignore
+- `--no-add-to-gitignore`: Disable adding nosync folder to .gitignore
+- `--verbose`: Enable verbose logging (true|false)
+- `--no-verbose`: Disable verbose logging
+
+## Configuration
+The configuration file is located in the root of the project and is named `fnspm.config.{cjs, mjs, js}`.
+- `CommonJS` and `ES6` are supported.
+- CommonJS extension is `.cjs`
+- ES6 extension is `.mjs`
+- JavaScript extension is `.js`
+- Extension is automatically detected on initialization based on the `package.json` file.
+
+### Default configuration file:
+
+```js
+/** @type {import('fnspm').Config} */
+const config = {
+    "packageManager": {
+        "default": "npm",
+        "detection": "auto",
+    },
+    "symlink": {
+        "enabled": true,
+        "addToGitIgnore": true,
+        "nosyncName": "node_modules.nosync",
+    },
+    "debug": {
+        "verbose": false,
+    },
+};
+
+// CommonJS and JS
+module.exports = config;
+
+// ES6
+export default config;
 ```
 
 ## Usage
@@ -124,6 +178,7 @@ bun test
 ```
 fnspm/
 ├── src/
+│   ├── config/          # Configuration files
 │   ├── packages/         # Package manager implementations
 │   ├── utils/           # Helper utilities
 ├── dist/                # Compiled JavaScript
@@ -156,9 +211,9 @@ You are free to use it for **personal projects**. Keep in mind that the project 
 ## Roadmap
 
 - [ ] Add support for workspaces
-- [ ] Implement package.json manipulation
-- [ ] Add support for more package managers
+- [x] Implement package.json manipulation
+- [x] Add support for more package managers
 - [ ] Improve error handling and recovery
 - [ ] Add support for multiple cloud providers (iCloud, Dropbox, Google Drive, etc.)
-- [ ] Implement configuration file
-- [ ] Add interactive mode (CLI)
+- [x] Implement configuration file
+- [x] Add interactive mode (CLI)
