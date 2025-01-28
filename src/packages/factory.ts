@@ -1,4 +1,5 @@
 import { PackageManagerType, PackageManagerLockFile } from "@/utils/types";
+import { PACKAGE_MANAGERS, LOCK_FILE_TO_PM_MAP } from "@/utils/package-managers";
 import {BunPM} from "./bun";
 import {DenoPM} from "./deno";
 import { NodePM } from "./npm";
@@ -6,25 +7,24 @@ import  PackageManager from "./package_manager";
 import { PNodePM } from "./pnpm";
 import { YarnPM } from "./yarn";
 
-export const VALID_PACKAGE_MANAGERS = ['npm', 'pnpm', 'yarn', 'deno', 'bun'];
+export const VALID_PACKAGE_MANAGERS = Object.keys(PACKAGE_MANAGERS);
 
 export function PackageManagerFactory(packageManager: PackageManagerType | PackageManagerLockFile): PackageManager {
-    switch (packageManager) {
+    // If it's a lock file, convert it to package manager type
+    const pmType = LOCK_FILE_TO_PM_MAP[packageManager as PackageManagerLockFile] || packageManager;
+
+    switch (pmType) {
         case 'npm':
-        case 'package-lock.json':
             return new NodePM();
         case 'yarn':
-        case 'yarn.lock':
             return new YarnPM();
         case 'pnpm':
-        case 'pnpm-lock.yaml':
             return new PNodePM();
         case 'bun':
-        case 'bun.lockb':
             return new BunPM();
         case 'deno':
-        case 'deno.lock':
             return new DenoPM();
-        
+        default:
+            throw new Error(`Unsupported package manager: ${pmType}`);
     }
 }

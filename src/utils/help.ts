@@ -55,7 +55,7 @@ Features:
          * package-lock.json -> npm
          * yarn.lock        -> yarn
          * pnpm-lock.yaml   -> pnpm
-         * bun.lockb        -> bun
+         * bun.(lockb|lock) -> bun
          * deno.lock        -> deno
 
     2. macOS Optimization:
@@ -67,7 +67,5 @@ Notes:
     - All package manager commands and flags are passed through directly
     - The tool preserves native package manager behavior
     - Only adds macOS optimization and package manager detection
-
-For more information, visit: https://github.com/yourusername/fnspm
 `);
 }

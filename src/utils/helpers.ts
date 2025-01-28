@@ -96,13 +96,7 @@ export const findPackageManagerLockFile = async (): Promise<PackageManagerType> 
     const config = await loadConfig();
     const defaultPm = config.packageManager.default;
     const detection = config.packageManager.detection;
-    const lockFileMap = {
-        'package-lock.json': 'npm',
-        'pnpm-lock.yaml': 'pnpm',
-        'yarn.lock': 'yarn',
-        'bun.lockb': 'bun',
-        'deno.lock': 'deno'
-    } as const;
+    const { LOCK_FILE_TO_PM_MAP } = await import('@/utils/package-managers');
 
     if (config.debug.verbose) {
         console.info(`Detection Mode: ${detection}`);
@@ -110,7 +104,7 @@ export const findPackageManagerLockFile = async (): Promise<PackageManagerType> 
     }
 
     if (detection === 'auto') {
-        for (const [lockFile, pmType] of Object.entries(lockFileMap)) {
+        for (const [lockFile, pmType] of Object.entries(LOCK_FILE_TO_PM_MAP)) {
             if (fs.existsSync(path.join(process.cwd(), lockFile))) {
                 console.info(`No package manager specified, using "${pmType}" based on lock file`);
                 return pmType ;
@@ -133,11 +127,22 @@ export const findPackageManagerLockFile = async (): Promise<PackageManagerType> 
 export async function shouldCreateSymlink(): Promise<boolean> {
     const config = await loadConfig();
     if (config.symlink.enabled) {
-        if (!fs.existsSync(path.join(process.cwd(), 'node_modules'))) {
+        const nodeModulesPath = path.join(process.cwd(), 'node_modules');
+        const nodeModulesNoSyncPath = path.join(process.cwd(), config.symlink.nosyncName);
+        const targetAbsolutePath = path.resolve(nodeModulesNoSyncPath);
+
+        if (!fs.existsSync(nodeModulesPath)) {
             return false;
         }
-        
-        return !fs.lstatSync(path.join(process.cwd(), 'node_modules')).isSymbolicLink();
+
+        const stats = fs.lstatSync(nodeModulesPath);
+        if (stats.isSymbolicLink()) {
+            const currentTarget = fs.readlinkSync(nodeModulesPath);
+            const currentTargetAbsolute = path.resolve(path.dirname(nodeModulesPath), currentTarget);
+            return currentTargetAbsolute !== targetAbsolutePath;
+        }
+
+        return true;
     }
 
     return false;
@@ -151,13 +156,39 @@ export async function createSymlink(): Promise<void> {
         try {
             const nodeModulesPath = path.join(process.cwd(), 'node_modules');
             const nodeModulesNoSyncPath = path.join(process.cwd(), nosyncName);
+            const isWindows = process.platform === 'win32';
+
+            const symlinkType = isWindows ? 'junction' : 'dir';
+            const targetAbsolutePath = path.resolve(nodeModulesNoSyncPath);
 
             if (fs.existsSync(nodeModulesPath)) {
-                if (fs.existsSync(nodeModulesNoSyncPath)) {
-                    fs.rmSync(nodeModulesNoSyncPath, { recursive: true });
+                const stats = fs.lstatSync(nodeModulesPath);
+
+                if (stats.isSymbolicLink()) {
+                    const currentTarget = fs.readlinkSync(nodeModulesPath);
+                    const currentTargetAbsolute = path.resolve(path.dirname(nodeModulesPath), currentTarget);
+                
+                    if (currentTargetAbsolute !== targetAbsolutePath) {
+                        fs.unlinkSync(nodeModulesPath);
+
+                        if (fs.existsSync(currentTargetAbsolute)) {
+                            if (fs.existsSync(nodeModulesNoSyncPath)) {
+                                fs.rmSync(nodeModulesNoSyncPath, { recursive: true, force: true });
+                            }
+                            fs.renameSync(currentTargetAbsolute, nodeModulesNoSyncPath);
+                        }
+
+                        fs.symlinkSync(targetAbsolutePath, nodeModulesPath, symlinkType);
+                    }
+                } 
+                else if (stats.isDirectory()) {                    
+                    if (fs.existsSync(nodeModulesNoSyncPath)) {
+                        fs.rmSync(nodeModulesNoSyncPath, { recursive: true, force: true });
+                    }
+                    
+                    fs.renameSync(nodeModulesPath, nodeModulesNoSyncPath);
+                    fs.symlinkSync(targetAbsolutePath, nodeModulesPath, symlinkType);
                 }
-                fs.renameSync(nodeModulesPath, nodeModulesNoSyncPath);
-                fs.symlinkSync(nodeModulesNoSyncPath, nodeModulesPath, 'junction');
             }
             
             resolve();
@@ -168,7 +199,8 @@ export async function createSymlink(): Promise<void> {
     });
 }
 
-export const AddToGitIgnore = (): void => {
+export const AddToGitIgnore = async (): Promise<void> => {
+    const config = await loadConfig();
     const gitIgnorePath = path.join(process.cwd(), '.gitignore');
     const gitIgnoreContent = fs.readFileSync(gitIgnorePath, 'utf8');
     const gitIgnoreContentArray = gitIgnoreContent.split('\n');
@@ -176,7 +208,7 @@ export const AddToGitIgnore = (): void => {
     if (!gitIgnoreContentArray.some((value) => value === "node_modules")) {
         fs.appendFileSync(gitIgnorePath, '\n# Symlink is not a directory');
         fs.appendFileSync(gitIgnorePath, '\nnode_modules');
-        fs.appendFileSync(gitIgnorePath, '\nnode_modules.nosync/');
+        fs.appendFileSync(gitIgnorePath, `\n${config.symlink.nosyncName}/`);
     }
 };
 

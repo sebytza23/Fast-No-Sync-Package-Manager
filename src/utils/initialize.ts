@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { prompt } from 'enquirer';
 import { defaultConfig } from '@/config/fnspm.config';
-import { Config, PackageManagerType } from './types';
+import { Config } from './types';
 import { VALID_PACKAGE_MANAGERS } from '@/packages/factory';
 
 export const initialize = async (args: string[]) => {

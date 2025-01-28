@@ -17,6 +17,10 @@ npm install -g fnspm
 ```
 
 ## Initialization
+### This should be done in your project root directory
+#### Initialize FNSPM in your project:
+
+> **Info**: If you skip the initialization step, FNSPM will use the **[default configuration](#default-configuration-file)**. However, it's recommended to run the initialization command to customize the setup according to your needs.
 
 ```bash
 fnspm initialize [options]
@@ -44,7 +48,7 @@ The configuration file is located in the root of the project and is named `fnspm
 - JavaScript extension is `.js`
 - Extension is automatically detected on initialization based on the `package.json` file.
 
-### Default configuration file:
+### Default configuration file
 
 ```js
 /** @type {import('fnspm').Config} */
@@ -117,7 +121,7 @@ If no package manager is specified, FNSPM will detect it based on lock files:
 - `package-lock.json` → npm
 - `yarn.lock` → yarn
 - `pnpm-lock.yaml` → pnpm
-- `bun.lockb` → bun
+- `bun.(lockb|lock)` → bun
 - `deno.lock` → deno
 
 ## Features in Detail
@@ -208,12 +212,18 @@ You are free to use it for **personal projects**. Keep in mind that the project 
 
 **Marin-Eusebiu Șerban**
 
+## Supported Package Managers Versions
+- npm: >= 6.0.0
+- yarn: >= 1.4.0
+- pnpm: >= 6.0.0
+- bun: >= 0.6.0
+- deno: >= 1.0.0
+
 ## Roadmap
 
-- [ ] Add support for workspaces
 - [x] Implement package.json manipulation
 - [x] Add support for more package managers
-- [ ] Improve error handling and recovery
-- [ ] Add support for multiple cloud providers (iCloud, Dropbox, Google Drive, etc.)
+- [x] Improve error handling and recovery
+- [x] Add support for multiple cloud providers (iCloud, Dropbox, Google Drive, etc.) - through the nosync folder  
 - [x] Implement configuration file
 - [x] Add interactive mode (CLI)

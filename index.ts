@@ -59,7 +59,7 @@ const main = async () => {
         await pm.execute(args);
         const config = await loadConfig();
         if (config.symlink.addToGitIgnore) {
-            AddToGitIgnore();
+            await AddToGitIgnore();
         }
     } catch (error) {
         console.error(`Failed to execute command:\n${error}`);

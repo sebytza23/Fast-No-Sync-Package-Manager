@@ -1,5 +1,7 @@
-export type PackageManagerType = 'npm' | 'yarn' | 'pnpm' | 'bun' | 'deno';
-export type PackageManagerLockFile = 'package-lock.json' | 'yarn.lock' | 'pnpm-lock.yaml' | 'bun.lockb' | 'deno.lock';
+import { PACKAGE_MANAGERS } from '@/utils/package-managers';
+
+export type PackageManagerType = keyof typeof PACKAGE_MANAGERS;
+export type PackageManagerLockFile = typeof PACKAGE_MANAGERS[PackageManagerType]['lockFiles'][number];
 export type DetectionMode = 'auto' | 'default' | PackageManagerType;
 
 export interface PackageManagerConfig {
@@ -21,4 +23,4 @@ export interface Config {
   packageManager: PackageManagerConfig;
   symlink: SymlinkConfig;
   debug: DebugConfig;
-} 
+}
