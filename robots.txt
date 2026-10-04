@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sebytza23.github.io/Fast-No-Sync-Package-Manager/sitemap.xml

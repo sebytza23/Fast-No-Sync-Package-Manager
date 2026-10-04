@@ -1,0 +1,64 @@
+<!doctype html><html lang="en" class="no-js"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Changelog — FNSPM documentation</title><meta name="description" content="Release notes generated directly from the repository changelog."><link rel="canonical" href="https://sebytza23.github.io/Fast-No-Sync-Package-Manager/changelog/"><meta name="theme-color" content="#FFFFFF"><link rel="icon" href="/Fast-No-Sync-Package-Manager/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/Fast-No-Sync-Package-Manager/assets/style.css"><script src="/Fast-No-Sync-Package-Manager/assets/app.js" defer></script></head><body data-base="/Fast-No-Sync-Package-Manager/"><a class="skip-link" href="#main-content">Skip to content</a><header class="topbar"><div class="topbar-inner"><button class="menu-button icon-button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a class="brand" href="/Fast-No-Sync-Package-Manager/">FNSPM<span>Documentation</span></a><div class="header-actions"><a class="version-link" href="/Fast-No-Sync-Package-Manager/changelog/">v1.0.0</a><button class="search-button" data-open-search aria-label="Search documentation" aria-haspopup="dialog" aria-controls="documentation-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Search docs</span><kbd>/</kbd></button><a class="github-link" href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager">GitHub</a></div></div></header><div class="site-shell"><aside id="sidebar" class="sidebar"><nav aria-label="Documentation"><p class="nav-group">Start here</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/"><span>Overview</span><span class="nav-number" aria-hidden="true">00</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/getting-started/"><span>Getting started</span><span class="nav-number" aria-hidden="true">01</span></a><p class="nav-group">Guides</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/configuration/"><span>Configuration</span><span class="nav-number" aria-hidden="true">02</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/workspaces/"><span>Projects &amp; workspaces</span><span class="nav-number" aria-hidden="true">03</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/storage/"><span>Dependency storage</span><span class="nav-number" aria-hidden="true">04</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/package-managers/"><span>Package managers</span><span class="nav-number" aria-hidden="true">05</span></a><p class="nav-group">Reference</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/cli/"><span>CLI reference</span><span class="nav-number" aria-hidden="true">06</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/troubleshooting/"><span>Troubleshooting</span><span class="nav-number" aria-hidden="true">07</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/upgrading/"><span>Upgrading to v1</span><span class="nav-number" aria-hidden="true">08</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/api/"><span>JavaScript &amp; types</span><span class="nav-number" aria-hidden="true">09</span></a><p class="nav-group">Releases</p><a class="nav-link active" href="/Fast-No-Sync-Package-Manager/changelog/" aria-current="page"><span>Changelog</span><span class="nav-number" aria-hidden="true">10</span></a><p class="nav-group">Contributing</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/development/"><span>Development</span><span class="nav-number" aria-hidden="true">11</span></a></nav><div class="sidebar-bottom"><a href="https://www.npmjs.com/package/fnspm">npm package</a><span>GPL-3.0-only</span></div></aside><main id="main-content" tabindex="-1"><div class="article-header"><div><p class="breadcrumb">Releases</p><h1>Changelog</h1></div><span class="chapter-number" aria-label="Chapter 10">10</span></div><p class="page-description">Release notes generated directly from the repository changelog.</p><details class="mobile-toc"><summary>On this page</summary><nav aria-label="Page sections"><a href="#1-0-0-2026-10-04">1.0.0 — 2026-10-04</a><a href="#0-3-0-2026-10-01">0.3.0 — 2026-10-01</a></nav></details><article class="article"><h2 id="1-0-0-2026-10-04">1.0.0 — 2026-10-04</h2>
+<ul>
+<li>Hold operation locks across restoration, the native command, and conversion;
+coordinate workspace roots and sections, including untracked shared storage.</li>
+<li>Recognize common native options before dependency commands, including npm
+workspace selections, pnpm filters/recursive installs, and Yarn workspace adds.</li>
+<li>Add <code>config --show</code> with per-setting origins, manager selection reasons,
+project/dependency roots, and optional machine-readable JSON.</li>
+<li>Add <code>doctor --fix --dry-run</code> and explicit <code>doctor --fix</code> for identity-checked
+link recovery, interrupted restoration cleanup, and missing ignore rules.</li>
+<li>Verify all five native managers and workspace layouts, including Yarn PnP and
+cache-only Deno, using local fixtures rather than public registry dependencies.</li>
+<li>Expand Windows short paths and resolve directory aliases before launching Bun,
+avoiding workspace link failures without changing native arguments or configs.</li>
+<li>Normalize repository line endings and run the full manager suite on Windows,
+Linux, and macOS with Node.js 22 and 24.</li>
+</ul>
+<h3 id="compatibility-contract-for-1-0">Compatibility contract for 1.0</h3>
+<ul>
+<li>Preserve 0.3 configuration file formats, settings, closest-config resolution,
+native argument forwarding, exit codes, and local automatic conversion.</li>
+<li><code>config get</code>, <code>config set</code>, and other native config commands remain forwarded;
+only the <code>config --show</code> inspection form belongs to FNSPM.</li>
+<li>Concurrent or nested FNSPM operations targeting the same dependency scope fail
+promptly before starting another native command. External package managers and
+cloud clients do not participate in FNSPM locking.</li>
+<li>Recovery never removes unknown locks, adopts foreign links, or overwrites
+conflicting dependency directories.</li>
+</ul>
+<h2 id="0-3-0-2026-10-01">0.3.0 — 2026-10-01</h2>
+<ul>
+<li>Require Node.js 22 or newer; use a single npm development lockfile.</li>
+<li>Preserve native arguments, live terminal output, child exit status and interrupts.</li>
+<li>Load CJS/ESM configurations with strict validation and partial defaults.</li>
+<li>Implement documented initialization flags without overwriting existing config.</li>
+<li>Detect manifest package managers and workspace roots; reject ambiguous locks.</li>
+<li>Replace destructive relocation with collision checks, ownership state, rollback,
+operation locking, and explicit <code>migrate</code> / <code>restore</code> commands with dry runs.</li>
+<li>Add <code>doctor</code> and dedicated external dependency storage with link safety checks.</li>
+<li>Preserve automatic conversion after native commands, including workspace
+sections; only convert local dependencies in the invocation directory.</li>
+<li>Keep per-section initialization/configuration independent; inherit the nearest
+parent config without losing it when local migration state/lockfiles appear.</li>
+<li>Safely adopt matching legacy project-local nosync links without moving their
+dependency files, and handle repeat clean installs.</li>
+<li>Restore and refresh already tracked shared workspace storage when installs
+run from a section, preserving the workspace root's own configuration.</li>
+<li>Build before packaging, ship complete declarations, and avoid CLI side effects
+when importing the package.</li>
+<li>Add regression tests, package installation/type checking, cross-platform CI,
+and scheduled dependency updates.</li>
+<li>Correct cloud-provider support claims and align license documentation with GPL.</li>
+</ul>
+<h3 id="compatibility-notes">Compatibility notes</h3>
+<ul>
+<li>Unknown config settings/options are now rejected rather than silently ignored.</li>
+<li>Multiple lockfile managers require a declaration or explicit override.</li>
+<li><code>--no-sync-folder</code> now disables automatic migration.</li>
+<li>Migration refuses existing destinations instead of deleting them.</li>
+<li><code>restore</code> needs recorded ownership; matching project-local legacy links can be
+adopted using <code>migrate</code>, including automatic adoption before clean installs.</li>
+<li>TypeScript is a build dependency, not a peer requirement for CLI users.</li>
+</ul>
+</article><nav class="page-navigation" aria-label="Previous and next pages"><a href="/Fast-No-Sync-Package-Manager/api/"><span>Previous</span><strong>JavaScript &amp; types</strong></a><a class="next-page" href="/Fast-No-Sync-Package-Manager/development/"><span>Next</span><strong>Development</strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></nav><footer class="article-footer"><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/blob/91a68d3c673fd9224e5fd06c4811e69f40b7a064/CHANGELOG.md">View page source</a><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/issues">Report a documentation issue</a></footer></main><aside class="page-toc"><p>On this page</p><nav aria-label="Page sections"><a href="#1-0-0-2026-10-04">1.0.0 — 2026-10-04</a><a href="#0-3-0-2026-10-01">0.3.0 — 2026-10-01</a></nav><a class="toc-top" href="#main-content">Back to top</a></aside></div><dialog id="documentation-search" class="search-dialog" aria-labelledby="search-title"><div class="search-dialog-header"><h2 id="search-title">Search documentation</h2><button class="icon-button" data-close-search aria-label="Close search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><label class="search-input-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search-input" type="search" placeholder="Try storagePath or doctor" aria-label="Search pages, commands, and settings" autocomplete="off"></label><p id="search-status" class="search-status" role="status"></p><ul id="search-results" class="search-results"></ul><div class="search-hint">Arrow keys to navigate. Enter to open. Escape to close.</div></dialog><div id="copy-status" class="sr-only" role="status" aria-live="polite"></div></body></html>

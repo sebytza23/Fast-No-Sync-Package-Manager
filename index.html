@@ -1,0 +1,73 @@
+<!doctype html><html lang="en" class="no-js"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Overview — FNSPM documentation</title><meta name="description" content="Run the package manager you already use, with project settings and reversible local dependency storage."><link rel="canonical" href="https://sebytza23.github.io/Fast-No-Sync-Package-Manager/"><meta name="theme-color" content="#FFFFFF"><link rel="icon" href="/Fast-No-Sync-Package-Manager/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/Fast-No-Sync-Package-Manager/assets/style.css"><script src="/Fast-No-Sync-Package-Manager/assets/app.js" defer></script></head><body data-base="/Fast-No-Sync-Package-Manager/"><a class="skip-link" href="#main-content">Skip to content</a><header class="topbar"><div class="topbar-inner"><button class="menu-button icon-button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a class="brand" href="/Fast-No-Sync-Package-Manager/">FNSPM<span>Documentation</span></a><div class="header-actions"><a class="version-link" href="/Fast-No-Sync-Package-Manager/changelog/">v1.0.0</a><button class="search-button" data-open-search aria-label="Search documentation" aria-haspopup="dialog" aria-controls="documentation-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Search docs</span><kbd>/</kbd></button><a class="github-link" href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager">GitHub</a></div></div></header><div class="site-shell"><aside id="sidebar" class="sidebar"><nav aria-label="Documentation"><p class="nav-group">Start here</p><a class="nav-link active" href="/Fast-No-Sync-Package-Manager/" aria-current="page"><span>Overview</span><span class="nav-number" aria-hidden="true">00</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/getting-started/"><span>Getting started</span><span class="nav-number" aria-hidden="true">01</span></a><p class="nav-group">Guides</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/configuration/"><span>Configuration</span><span class="nav-number" aria-hidden="true">02</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/workspaces/"><span>Projects &amp; workspaces</span><span class="nav-number" aria-hidden="true">03</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/storage/"><span>Dependency storage</span><span class="nav-number" aria-hidden="true">04</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/package-managers/"><span>Package managers</span><span class="nav-number" aria-hidden="true">05</span></a><p class="nav-group">Reference</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/cli/"><span>CLI reference</span><span class="nav-number" aria-hidden="true">06</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/troubleshooting/"><span>Troubleshooting</span><span class="nav-number" aria-hidden="true">07</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/upgrading/"><span>Upgrading to v1</span><span class="nav-number" aria-hidden="true">08</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/api/"><span>JavaScript &amp; types</span><span class="nav-number" aria-hidden="true">09</span></a><p class="nav-group">Releases</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/changelog/"><span>Changelog</span><span class="nav-number" aria-hidden="true">10</span></a><p class="nav-group">Contributing</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/development/"><span>Development</span><span class="nav-number" aria-hidden="true">11</span></a></nav><div class="sidebar-bottom"><a href="https://www.npmjs.com/package/fnspm">npm package</a><span>GPL-3.0-only</span></div></aside><main id="main-content" tabindex="-1"><div class="article-header"><div><p class="breadcrumb">Start here</p><h1>Overview</h1></div><span class="chapter-number" aria-label="Chapter 0">00</span></div><p class="page-description">Run the package manager you already use, with project settings and reversible local dependency storage.</p><details class="mobile-toc"><summary>On this page</summary><nav aria-label="Page sections"><a href="#start-with-your-existing-project">Start with your existing project</a><a href="#what-conversion-changes">What conversion changes</a><a href="#choose-the-guide-for-your-workflow">Choose the guide for your workflow</a><a href="#what-v1-guarantees">What v1 guarantees</a><a href="#cloud-storage-and-installation-speed">Cloud storage and installation speed</a></nav></details><article class="article"><p>FNSPM is a command-line wrapper for <strong>npm, Yarn, pnpm, Bun, and Deno</strong>. It selects a manager for your project, forwards your command, and can keep local dependencies in a separate directory connected to <code>node_modules</code>.</p>
+<p>The manager still resolves packages, writes lockfiles, and runs scripts. FNSPM adds configuration, reversible storage, and coordination around that workflow.</p>
+<h2 id="start-with-your-existing-project">Start with your existing project</h2>
+<p>Install FNSPM with Node.js 22 or newer, then run it in a project that already has a package manifest.</p>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>npm install -g fnspm
+fnspm config --show
+fnspm install
+</code></pre></div><p>No configuration file is required. By default, FNSPM detects the manager and uses a project-local <code>node_modules.nosync</code> directory. If it cannot detect a manager, it falls back to npm. The chosen manager must already be on your <code>PATH</code>.</p>
+<p>Follow <a href="/Fast-No-Sync-Package-Manager/getting-started/">Getting started</a> for a complete first install, or <a href="/Fast-No-Sync-Package-Manager/configuration/">Configuration</a> to customize an existing project.</p>
+<h2 id="what-conversion-changes">What conversion changes</h2>
+<p>A successful native command can turn this layout:</p>
+<div class="code-block"><div class="code-toolbar"><span>Text</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>project/
+  package.json
+  node_modules/             actual dependency files
+</code></pre></div><p>Into this layout:</p>
+<div class="code-block"><div class="code-toolbar"><span>Text</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>project/
+  package.json
+  node_modules -&gt; node_modules.nosync
+  node_modules.nosync/      the same dependency files
+  .fnspm-state.json         recorded ownership
+</code></pre></div><p>On Linux and macOS, the connection is a symbolic link. On Windows, it is a directory junction. Your code continues to import packages through <code>node_modules</code>.</p>
+<p>You can inspect the layout with <code>fnspm doctor</code> and return to a regular dependency directory with <code>fnspm restore</code>. See <a href="/Fast-No-Sync-Package-Manager/storage/">Dependency storage</a> for the complete lifecycle.</p>
+<h2 id="choose-the-guide-for-your-workflow">Choose the guide for your workflow</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>You want to…</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Install FNSPM and run your first command</td>
+<td><a href="/Fast-No-Sync-Package-Manager/getting-started/">Getting started</a></td>
+</tr>
+<tr>
+<td>Give projects or sections different settings</td>
+<td><a href="/Fast-No-Sync-Package-Manager/configuration/">Configuration</a> and <a href="/Fast-No-Sync-Package-Manager/workspaces/">Projects &amp; workspaces</a></td>
+</tr>
+<tr>
+<td>Understand auto-convert or move dependencies outside a synced folder</td>
+<td><a href="/Fast-No-Sync-Package-Manager/storage/">Dependency storage</a></td>
+</tr>
+<tr>
+<td>Use a specific manager, workspace filter, or lockfile install</td>
+<td><a href="/Fast-No-Sync-Package-Manager/package-managers/">Package managers</a></td>
+</tr>
+<tr>
+<td>Look up flags and return codes</td>
+<td><a href="/Fast-No-Sync-Package-Manager/cli/">CLI reference</a></td>
+</tr>
+<tr>
+<td>Investigate a broken link, lock, or destination conflict</td>
+<td><a href="/Fast-No-Sync-Package-Manager/troubleshooting/">Troubleshooting</a></td>
+</tr>
+<tr>
+<td>Upgrade an older FNSPM setup</td>
+<td><a href="/Fast-No-Sync-Package-Manager/upgrading/">Upgrading to v1</a></td>
+</tr>
+<tr>
+<td>See what changed in a release</td>
+<td><a href="/Fast-No-Sync-Package-Manager/changelog/">Changelog</a></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="what-v1-guarantees">What v1 guarantees</h2>
+<p>Version 1.0 preserves documented configuration formats, section overrides, native arguments, child exit codes, and local automatic conversion. The supported JavaScript API and exported types are documented in <a href="/Fast-No-Sync-Package-Manager/api/">JavaScript &amp; types</a>.</p>
+<p>FNSPM holds operation locks across restoration, native execution, and conversion. A competing FNSPM operation on the same dependency scope fails before another manager starts. Independent projects can operate independently.</p>
+<p>These locks coordinate FNSPM processes. Direct manager commands and cloud clients do not participate in them.</p>
+<h2 id="cloud-storage-and-installation-speed">Cloud storage and installation speed</h2>
+<p>FNSPM does not configure cloud-provider exclusions or guarantee that installs become faster. The <code>.nosync</code> naming convention is not a universal exclusion mechanism. Automatic conversion happens after a native command finishes, so files can still be synced during an install.</p>
+<p>For cloud-oriented setups, read <a href="/Fast-No-Sync-Package-Manager/storage/">Dependency storage</a> before choosing a destination. Use provider-supported exclusions or dedicated storage outside the synced folder, and verify the provider's behavior.</p>
+</article><nav class="page-navigation" aria-label="Previous and next pages"><div></div><a class="next-page" href="/Fast-No-Sync-Package-Manager/getting-started/"><span>Next</span><strong>Getting started</strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></nav><footer class="article-footer"><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/blob/91a68d3c673fd9224e5fd06c4811e69f40b7a064/docs/content/overview.md">View page source</a><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/issues">Report a documentation issue</a></footer></main><aside class="page-toc"><p>On this page</p><nav aria-label="Page sections"><a href="#start-with-your-existing-project">Start with your existing project</a><a href="#what-conversion-changes">What conversion changes</a><a href="#choose-the-guide-for-your-workflow">Choose the guide for your workflow</a><a href="#what-v1-guarantees">What v1 guarantees</a><a href="#cloud-storage-and-installation-speed">Cloud storage and installation speed</a></nav><a class="toc-top" href="#main-content">Back to top</a></aside></div><dialog id="documentation-search" class="search-dialog" aria-labelledby="search-title"><div class="search-dialog-header"><h2 id="search-title">Search documentation</h2><button class="icon-button" data-close-search aria-label="Close search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><label class="search-input-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search-input" type="search" placeholder="Try storagePath or doctor" aria-label="Search pages, commands, and settings" autocomplete="off"></label><p id="search-status" class="search-status" role="status"></p><ul id="search-results" class="search-results"></ul><div class="search-hint">Arrow keys to navigate. Enter to open. Escape to close.</div></dialog><div id="copy-status" class="sr-only" role="status" aria-live="polite"></div></body></html>

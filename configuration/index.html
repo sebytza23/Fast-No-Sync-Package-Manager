@@ -1,0 +1,178 @@
+<!doctype html><html lang="en" class="no-js"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Configuration — FNSPM documentation</title><meta name="description" content="Understand every setting, file format, default, and configuration boundary."><link rel="canonical" href="https://sebytza23.github.io/Fast-No-Sync-Package-Manager/configuration/"><meta name="theme-color" content="#FFFFFF"><link rel="icon" href="/Fast-No-Sync-Package-Manager/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/Fast-No-Sync-Package-Manager/assets/style.css"><script src="/Fast-No-Sync-Package-Manager/assets/app.js" defer></script></head><body data-base="/Fast-No-Sync-Package-Manager/"><a class="skip-link" href="#main-content">Skip to content</a><header class="topbar"><div class="topbar-inner"><button class="menu-button icon-button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a class="brand" href="/Fast-No-Sync-Package-Manager/">FNSPM<span>Documentation</span></a><div class="header-actions"><a class="version-link" href="/Fast-No-Sync-Package-Manager/changelog/">v1.0.0</a><button class="search-button" data-open-search aria-label="Search documentation" aria-haspopup="dialog" aria-controls="documentation-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Search docs</span><kbd>/</kbd></button><a class="github-link" href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager">GitHub</a></div></div></header><div class="site-shell"><aside id="sidebar" class="sidebar"><nav aria-label="Documentation"><p class="nav-group">Start here</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/"><span>Overview</span><span class="nav-number" aria-hidden="true">00</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/getting-started/"><span>Getting started</span><span class="nav-number" aria-hidden="true">01</span></a><p class="nav-group">Guides</p><a class="nav-link active" href="/Fast-No-Sync-Package-Manager/configuration/" aria-current="page"><span>Configuration</span><span class="nav-number" aria-hidden="true">02</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/workspaces/"><span>Projects &amp; workspaces</span><span class="nav-number" aria-hidden="true">03</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/storage/"><span>Dependency storage</span><span class="nav-number" aria-hidden="true">04</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/package-managers/"><span>Package managers</span><span class="nav-number" aria-hidden="true">05</span></a><p class="nav-group">Reference</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/cli/"><span>CLI reference</span><span class="nav-number" aria-hidden="true">06</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/troubleshooting/"><span>Troubleshooting</span><span class="nav-number" aria-hidden="true">07</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/upgrading/"><span>Upgrading to v1</span><span class="nav-number" aria-hidden="true">08</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/api/"><span>JavaScript &amp; types</span><span class="nav-number" aria-hidden="true">09</span></a><p class="nav-group">Releases</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/changelog/"><span>Changelog</span><span class="nav-number" aria-hidden="true">10</span></a><p class="nav-group">Contributing</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/development/"><span>Development</span><span class="nav-number" aria-hidden="true">11</span></a></nav><div class="sidebar-bottom"><a href="https://www.npmjs.com/package/fnspm">npm package</a><span>GPL-3.0-only</span></div></aside><main id="main-content" tabindex="-1"><div class="article-header"><div><p class="breadcrumb">Guides</p><h1>Configuration</h1></div><span class="chapter-number" aria-label="Chapter 2">02</span></div><p class="page-description">Understand every setting, file format, default, and configuration boundary.</p><details class="mobile-toc"><summary>On this page</summary><nav aria-label="Page sections"><a href="#supported-files">Supported files</a><a href="#a-complete-commonjs-configuration">A complete CommonJS configuration</a><a href="#every-setting">Every setting</a><a href="#selecting-a-manager-deliberately">Selecting a manager deliberately</a><a href="#how-configuration-is-resolved">How configuration is resolved</a><a href="#inspect-effective-values-and-their-origins">Inspect effective values and their origins</a><a href="#disabling-future-conversion">Disabling future conversion</a><a href="#initialization-options">Initialization options</a></nav></details><article class="article"><h2 id="supported-files">Supported files</h2>
+<p>Keep <strong>one</strong> configuration file per configured directory:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Module format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fnspm.config.cjs</code></td>
+<td>CommonJS, regardless of the package's module type</td>
+</tr>
+<tr>
+<td><code>fnspm.config.mjs</code></td>
+<td>ES module</td>
+</tr>
+<tr>
+<td><code>fnspm.config.js</code></td>
+<td>Follows the project's <code>package.json#type</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>fnspm initialize</code> writes <code>.mjs</code> when the current manifest declares <code>&quot;type&quot;: &quot;module&quot;</code>; otherwise it writes <code>.cjs</code>. A config file exports an object, and may specify only the settings you want to change.</p>
+<p>Configuration executes as JavaScript. Load it only from projects you trust.</p>
+<h2 id="a-complete-commonjs-configuration">A complete CommonJS configuration</h2>
+<div class="code-block"><div class="code-toolbar"><span>JavaScript</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>/** @type {import(&#39;fnspm&#39;).UserConfig} */
+const config = {
+    packageManager: {
+        default: &#39;npm&#39;,
+        detection: &#39;auto&#39;,
+    },
+    symlink: {
+        enabled: true,
+        addToGitIgnore: true,
+        nosyncName: &#39;node_modules.nosync&#39;,
+    },
+    debug: {
+        verbose: false,
+    },
+};
+
+module.exports = config;
+</code></pre></div><p>These are the built-in defaults. Omitted fields receive these values.</p>
+<p>For ES modules, keep the object and replace the final line with:</p>
+<div class="code-block"><div class="code-toolbar"><span>JavaScript</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>export default config;
+</code></pre></div><h2 id="every-setting">Every setting</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>packageManager.default</code></td>
+<td><code>'npm'</code></td>
+<td>Fallback manager, or the chosen manager when detection is <code>'default'</code></td>
+</tr>
+<tr>
+<td><code>packageManager.detection</code></td>
+<td><code>'auto'</code></td>
+<td><code>'auto'</code>, <code>'default'</code>, or one of <code>'npm'</code>, <code>'yarn'</code>, <code>'pnpm'</code>, <code>'bun'</code>, <code>'deno'</code></td>
+</tr>
+<tr>
+<td><code>symlink.enabled</code></td>
+<td><code>true</code></td>
+<td>Convert local dependencies after eligible successful native commands</td>
+</tr>
+<tr>
+<td><code>symlink.addToGitIgnore</code></td>
+<td><code>true</code></td>
+<td>Add ignore rules during migration and supported repairs</td>
+</tr>
+<tr>
+<td><code>symlink.nosyncName</code></td>
+<td><code>'node_modules.nosync'</code></td>
+<td>A single safe directory name inside the project</td>
+</tr>
+<tr>
+<td><code>symlink.storagePath</code></td>
+<td>Not set</td>
+<td>Absolute path to a dedicated external destination; takes precedence over the local name</td>
+</tr>
+<tr>
+<td><code>debug.verbose</code></td>
+<td><code>false</code></td>
+<td>Print the command and migration diagnostics</td>
+</tr>
+</tbody>
+</table></div>
+<p>Booleans must be actual JavaScript <code>true</code> or <code>false</code>, not strings. Unknown sections and unknown settings are rejected. Names containing path separators, reserved metadata names, or invalid Windows filename characters are rejected.</p>
+<p><code>storagePath</code> must be absolute. Its parent must already exist on the same filesystem, and the destination must be dedicated to this project. See <a href="/Fast-No-Sync-Package-Manager/storage/">Dependency storage</a>.</p>
+<h2 id="selecting-a-manager-deliberately">Selecting a manager deliberately</h2>
+<p>To always use Bun unless the current command supplies <code>--pm</code>:</p>
+<div class="code-block"><div class="code-toolbar"><span>JavaScript</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>module.exports = {
+    packageManager: { detection: &#39;bun&#39; },
+};
+</code></pre></div><p>To always use the configured fallback:</p>
+<div class="code-block"><div class="code-toolbar"><span>JavaScript</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>module.exports = {
+    packageManager: { default: &#39;pnpm&#39;, detection: &#39;default&#39; },
+};
+</code></pre></div><p>Setting only <code>default: 'pnpm'</code> does <strong>not</strong> override a manager declared in the manifest when detection remains <code>'auto'</code>.</p>
+<h2 id="how-configuration-is-resolved">How configuration is resolved</h2>
+<p>FNSPM searches upward for the nearest configuration, stopping at a Git boundary. A directory without its own config can inherit a parent's config. A nested Git repository creates a new boundary.</p>
+<p>A section config overrides the parent config <strong>as a whole</strong>. FNSPM merges the selected file with built-in defaults, not with the parent's settings.</p>
+<p>Suppose the root config sets Bun and disables conversion. If <code>packages/web/fnspm.config.cjs</code> contains only:</p>
+<div class="code-block"><div class="code-toolbar"><span>JavaScript</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>module.exports = {
+    symlink: { nosyncName: &#39;web.nosync&#39; },
+};
+</code></pre></div><p>Then that section uses automatic detection, npm as the fallback, and <strong>enabled</strong> conversion. Those values come from the built-in defaults. Repeat a parent's settings in the section if you want to keep them.</p>
+<p>A local migration state file or generated section lockfile does not discard an otherwise inherited parent config. Project detection and config lookup are separate operations.</p>
+<h2 id="inspect-effective-values-and-their-origins">Inspect effective values and their origins</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm config --show
+fnspm config --show --json
+fnspm config --show --pm pnpm
+</code></pre></div><p>The JSON report contains <code>cwd</code>, <code>projectRoot</code>, <code>dependencyRoot</code>, <code>configurationFile</code>, <code>config</code>, <code>origins</code>, <code>packageManager</code>, and <code>dependencyStorage</code>.</p>
+<p><code>origins</code> maps setting names such as <code>symlink.enabled</code> to the config file or <code>built-in default</code>. The <code>packageManager</code> object contains its <code>name</code>, selection <code>reason</code>, and detection <code>root</code>.</p>
+<p>A CLI <code>--pm</code> override changes the manager chosen for the report; it does not rewrite your configuration.</p>
+<h2 id="disabling-future-conversion">Disabling future conversion</h2>
+<p>Edit the chosen config:</p>
+<div class="code-block"><div class="code-toolbar"><span>JavaScript</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>module.exports = {
+    symlink: { enabled: false },
+};
+</code></pre></div><p>If dependencies are already converted, run <code>fnspm restore</code> to return them immediately. A later dependency-changing command through FNSPM also restores tracked local storage before execution, even when conversion is disabled. Native commands such as <code>run</code> do not necessarily trigger that restoration.</p>
+<h2 id="initialization-options">Initialization options</h2>
+<p><code>initialize</code> and <code>init-config</code> accept the same options. Supplying any options selects noninteractive initialization; use no options for the terminal wizard.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--default</code>, <code>-d</code></td>
+<td>Write defaults without prompts; other options can override them</td>
+</tr>
+<tr>
+<td><code>--pm &lt;manager&gt;</code></td>
+<td>Set <code>packageManager.default</code></td>
+</tr>
+<tr>
+<td><code>--detection &lt;mode&gt;</code></td>
+<td>Set the detection mode</td>
+</tr>
+<tr>
+<td><code>--symlink</code>, <code>--no-symlink</code></td>
+<td>Enable or disable conversion</td>
+</tr>
+<tr>
+<td><code>--no-sync-folder</code></td>
+<td>Alias for <code>--no-symlink</code></td>
+</tr>
+<tr>
+<td><code>--sync-folder &lt;name&gt;</code></td>
+<td>Set the local storage name</td>
+</tr>
+<tr>
+<td><code>--storage-path &lt;absolute-path&gt;</code></td>
+<td>Set external storage</td>
+</tr>
+<tr>
+<td><code>--add-to-gitignore</code>, <code>--no-add-to-gitignore</code></td>
+<td>Control generated ignore rules</td>
+</tr>
+<tr>
+<td><code>--verbose</code>, <code>--no-verbose</code></td>
+<td>Control command diagnostics</td>
+</tr>
+</tbody>
+</table></div>
+<p>Legacy boolean forms, such as <code>--symlink true</code> and <code>--verbose false</code>, remain supported. Existing configs are never overwritten by initialization; edit the file instead.</p>
+</article><nav class="page-navigation" aria-label="Previous and next pages"><a href="/Fast-No-Sync-Package-Manager/getting-started/"><span>Previous</span><strong>Getting started</strong></a><a class="next-page" href="/Fast-No-Sync-Package-Manager/workspaces/"><span>Next</span><strong>Projects &amp; workspaces</strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></nav><footer class="article-footer"><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/blob/91a68d3c673fd9224e5fd06c4811e69f40b7a064/docs/content/configuration.md">View page source</a><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/issues">Report a documentation issue</a></footer></main><aside class="page-toc"><p>On this page</p><nav aria-label="Page sections"><a href="#supported-files">Supported files</a><a href="#a-complete-commonjs-configuration">A complete CommonJS configuration</a><a href="#every-setting">Every setting</a><a href="#selecting-a-manager-deliberately">Selecting a manager deliberately</a><a href="#how-configuration-is-resolved">How configuration is resolved</a><a href="#inspect-effective-values-and-their-origins">Inspect effective values and their origins</a><a href="#disabling-future-conversion">Disabling future conversion</a><a href="#initialization-options">Initialization options</a></nav><a class="toc-top" href="#main-content">Back to top</a></aside></div><dialog id="documentation-search" class="search-dialog" aria-labelledby="search-title"><div class="search-dialog-header"><h2 id="search-title">Search documentation</h2><button class="icon-button" data-close-search aria-label="Close search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><label class="search-input-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search-input" type="search" placeholder="Try storagePath or doctor" aria-label="Search pages, commands, and settings" autocomplete="off"></label><p id="search-status" class="search-status" role="status"></p><ul id="search-results" class="search-results"></ul><div class="search-hint">Arrow keys to navigate. Enter to open. Escape to close.</div></dialog><div id="copy-status" class="sr-only" role="status" aria-live="polite"></div></body></html>

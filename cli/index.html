@@ -1,0 +1,91 @@
+<!doctype html><html lang="en" class="no-js"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CLI reference — FNSPM documentation</title><meta name="description" content="Every FNSPM command and flag, with examples and exit-status behavior."><link rel="canonical" href="https://sebytza23.github.io/Fast-No-Sync-Package-Manager/cli/"><meta name="theme-color" content="#FFFFFF"><link rel="icon" href="/Fast-No-Sync-Package-Manager/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/Fast-No-Sync-Package-Manager/assets/style.css"><script src="/Fast-No-Sync-Package-Manager/assets/app.js" defer></script></head><body data-base="/Fast-No-Sync-Package-Manager/"><a class="skip-link" href="#main-content">Skip to content</a><header class="topbar"><div class="topbar-inner"><button class="menu-button icon-button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a class="brand" href="/Fast-No-Sync-Package-Manager/">FNSPM<span>Documentation</span></a><div class="header-actions"><a class="version-link" href="/Fast-No-Sync-Package-Manager/changelog/">v1.0.0</a><button class="search-button" data-open-search aria-label="Search documentation" aria-haspopup="dialog" aria-controls="documentation-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Search docs</span><kbd>/</kbd></button><a class="github-link" href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager">GitHub</a></div></div></header><div class="site-shell"><aside id="sidebar" class="sidebar"><nav aria-label="Documentation"><p class="nav-group">Start here</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/"><span>Overview</span><span class="nav-number" aria-hidden="true">00</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/getting-started/"><span>Getting started</span><span class="nav-number" aria-hidden="true">01</span></a><p class="nav-group">Guides</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/configuration/"><span>Configuration</span><span class="nav-number" aria-hidden="true">02</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/workspaces/"><span>Projects &amp; workspaces</span><span class="nav-number" aria-hidden="true">03</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/storage/"><span>Dependency storage</span><span class="nav-number" aria-hidden="true">04</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/package-managers/"><span>Package managers</span><span class="nav-number" aria-hidden="true">05</span></a><p class="nav-group">Reference</p><a class="nav-link active" href="/Fast-No-Sync-Package-Manager/cli/" aria-current="page"><span>CLI reference</span><span class="nav-number" aria-hidden="true">06</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/troubleshooting/"><span>Troubleshooting</span><span class="nav-number" aria-hidden="true">07</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/upgrading/"><span>Upgrading to v1</span><span class="nav-number" aria-hidden="true">08</span></a><a class="nav-link" href="/Fast-No-Sync-Package-Manager/api/"><span>JavaScript &amp; types</span><span class="nav-number" aria-hidden="true">09</span></a><p class="nav-group">Releases</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/changelog/"><span>Changelog</span><span class="nav-number" aria-hidden="true">10</span></a><p class="nav-group">Contributing</p><a class="nav-link" href="/Fast-No-Sync-Package-Manager/development/"><span>Development</span><span class="nav-number" aria-hidden="true">11</span></a></nav><div class="sidebar-bottom"><a href="https://www.npmjs.com/package/fnspm">npm package</a><span>GPL-3.0-only</span></div></aside><main id="main-content" tabindex="-1"><div class="article-header"><div><p class="breadcrumb">Reference</p><h1>CLI reference</h1></div><span class="chapter-number" aria-label="Chapter 6">06</span></div><p class="page-description">Every FNSPM command and flag, with examples and exit-status behavior.</p><details class="mobile-toc"><summary>On this page</summary><nav aria-label="Page sections"><a href="#general-invocation">General invocation</a><a href="#help-and-version">help and version</a><a href="#initialize-and-init-config">initialize and init-config</a><a href="#config-show">config --show</a><a href="#doctor">doctor</a><a href="#migrate">migrate</a><a href="#restore">restore</a><a href="#reserved-command-names">Reserved command names</a><a href="#exit-codes-and-terminal-behavior">Exit codes and terminal behavior</a></nav></details><article class="article"><h2 id="general-invocation">General invocation</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm [--pm &lt;manager&gt;] [--debug] &lt;command&gt; [...native arguments]
+</code></pre></div><p><code>--pm</code> accepts <code>npm</code>, <code>yarn</code>, <code>pnpm</code>, <code>bun</code>, or <code>deno</code>, including <code>--pm=bun</code>. It applies to this invocation only and may be supplied once. <code>--debug</code> enables command diagnostics without editing config.</p>
+<p>Wrapper flags are removed before forwarding. Arguments after the <code>--</code> separator are preserved, including flags that look like FNSPM options:</p>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm --debug --pm npm run build
+fnspm --pm npm run build -- --debug
+</code></pre></div><p>The first command enables FNSPM diagnostics. The second forwards <code>--debug</code> to the native script. Quoted arguments retain their boundaries; FNSPM does not concatenate them into an application-generated shell command.</p>
+<h2 id="help-and-version">help and version</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm
+fnspm help
+fnspm --help
+fnspm -h
+fnspm --version
+fnspm -v
+</code></pre></div><p>No arguments show help. Help and version work without evaluating the project's configuration or running a package manager.</p>
+<h2 id="initialize-and-init-config">initialize and init-config</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm initialize
+fnspm initialize --default
+fnspm init-config --pm pnpm --detection default --no-symlink
+</code></pre></div><p>Without options, initialization requires an interactive terminal. With options, it writes validated configuration noninteractively into the current directory. Existing config files are never overwritten.</p>
+<p>See <a href="/Fast-No-Sync-Package-Manager/configuration/">Configuration</a> for all initialization flags, defaults, CJS/ESM formats, and section resolution.</p>
+<p><code>fnspm init</code> is forwarded to the native manager. It is not an alias for FNSPM initialization.</p>
+<h2 id="config-show">config --show</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm config --show
+fnspm config --show --json
+fnspm config --show --pm pnpm
+</code></pre></div><p>Print the effective configuration, each setting's origin, invocation/project/dependency roots, manager selection reason, and configured storage path. <code>--json</code> emits the same information as JSON.</p>
+<p>Inspection evaluates the selected config but does not run a native manager or write project files. Its supported native-looking arguments are <code>--show</code> and <code>--json</code>; <code>--pm</code> is parsed as a wrapper flag.</p>
+<p>Other native config commands remain forwarded:</p>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm --pm npm config get registry
+</code></pre></div><h2 id="doctor">doctor</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm doctor
+fnspm doctor --pm bun
+fnspm doctor --fix --dry-run
+fnspm doctor --fix
+</code></pre></div><p>Plain <code>doctor</code> is read-only. It reports the available manager version, local layout, configured target, migration state, operation locks, and ignore-rule issues. It returns a nonzero status for diagnosed errors; warnings alone do not necessarily cause failure.</p>
+<p><code>--fix --dry-run</code> previews supported repairs without writing. It can still return a nonzero diagnostic status because the problem remains until applied. <code>--dry-run</code> alone is not accepted for <code>doctor</code>.</p>
+<p><code>--fix</code> validates the plan before writing, applies ownership-checked repairs, and runs the normal health checks. It can recreate a missing tracked link, clean up completed restoration metadata, and add missing ignore rules. It does not remove unknown locks or overwrite conflicting directories.</p>
+<p>See <a href="/Fast-No-Sync-Package-Manager/troubleshooting/">Troubleshooting</a> for the repair workflow and error-specific guidance.</p>
+<h2 id="migrate">migrate</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm migrate --dry-run
+fnspm migrate
+</code></pre></div><p>Inspect or apply migration to an existing dependency directory. Migration uses the selected configuration and refuses unsafe paths, existing destinations, foreign links, cross-filesystem moves, and links that would be broken by relocation.</p>
+<p>It can also record ownership for a matching legacy project-local nosync link. See <a href="/Fast-No-Sync-Package-Manager/upgrading/">Upgrading to v1</a>.</p>
+<p>Only <code>--dry-run</code> is accepted as an additional argument to this command. Use configuration to choose the target.</p>
+<h2 id="restore">restore</h2>
+<div class="code-block"><div class="code-toolbar"><span>Shell</span><button type="button" class="copy-button" data-copy aria-label="Copy code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg><span>Copy</span></button></div><pre><code>fnspm restore --dry-run
+fnspm restore
+</code></pre></div><p>Inspect or restore dependencies with recorded FNSPM ownership. The command uses the recorded migration location and remains available even when the current config is invalid or has changed.</p>
+<p>It refuses untracked links, replaced storage, conflicting dependency entries, or link layouts that cannot be restored safely. Only <code>--dry-run</code> is accepted as an additional argument.</p>
+<p>Restoration does not remove config or disable future automatic conversion.</p>
+<h2 id="reserved-command-names">Reserved command names</h2>
+<p>FNSPM owns <code>help</code>, <code>initialize</code>, <code>init-config</code>, <code>doctor</code>, <code>migrate</code>, and <code>restore</code>. These command names cannot be forwarded to a manager through the wrapper. Use the manager directly if its own command collides with a reserved name.</p>
+<p>Only the <code>config --show</code> form is reserved for inspection. Other <code>config</code> commands use the manager's own implementation.</p>
+<h2 id="exit-codes-and-terminal-behavior">Exit codes and terminal behavior</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Native command succeeds</td>
+<td>Return <code>0</code>; optionally convert eligible dependencies</td>
+</tr>
+<tr>
+<td>Native command fails</td>
+<td>Preserve its exit code; do not perform post-success conversion</td>
+</tr>
+<tr>
+<td>Native process ends from a signal</td>
+<td>Forward interrupts and report a signal-derived failure status</td>
+</tr>
+<tr>
+<td>FNSPM configuration, lock, or safety error</td>
+<td>Return a nonzero wrapper error, normally <code>1</code></td>
+</tr>
+<tr>
+<td>Optional conversion fails after native success</td>
+<td>Print a diagnostic and preserve native success</td>
+</tr>
+<tr>
+<td>doctor identifies errors</td>
+<td>Return <code>1</code>; previews can remain nonzero</td>
+</tr>
+</tbody>
+</table></div>
+<p>Native stdout, stderr, and terminal input are streamed directly. SIGINT and SIGTERM are forwarded to the child process. Native global, redirected, dry-run, and help/version commands retain their conversion exclusions.</p>
+</article><nav class="page-navigation" aria-label="Previous and next pages"><a href="/Fast-No-Sync-Package-Manager/package-managers/"><span>Previous</span><strong>Package managers</strong></a><a class="next-page" href="/Fast-No-Sync-Package-Manager/troubleshooting/"><span>Next</span><strong>Troubleshooting</strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></a></nav><footer class="article-footer"><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/blob/91a68d3c673fd9224e5fd06c4811e69f40b7a064/docs/content/cli.md">View page source</a><a href="https://github.com/sebytza23/Fast-No-Sync-Package-Manager/issues">Report a documentation issue</a></footer></main><aside class="page-toc"><p>On this page</p><nav aria-label="Page sections"><a href="#general-invocation">General invocation</a><a href="#help-and-version">help and version</a><a href="#initialize-and-init-config">initialize and init-config</a><a href="#config-show">config --show</a><a href="#doctor">doctor</a><a href="#migrate">migrate</a><a href="#restore">restore</a><a href="#reserved-command-names">Reserved command names</a><a href="#exit-codes-and-terminal-behavior">Exit codes and terminal behavior</a></nav><a class="toc-top" href="#main-content">Back to top</a></aside></div><dialog id="documentation-search" class="search-dialog" aria-labelledby="search-title"><div class="search-dialog-header"><h2 id="search-title">Search documentation</h2><button class="icon-button" data-close-search aria-label="Close search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><label class="search-input-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search-input" type="search" placeholder="Try storagePath or doctor" aria-label="Search pages, commands, and settings" autocomplete="off"></label><p id="search-status" class="search-status" role="status"></p><ul id="search-results" class="search-results"></ul><div class="search-hint">Arrow keys to navigate. Enter to open. Escape to close.</div></dialog><div id="copy-status" class="sr-only" role="status" aria-live="polite"></div></body></html>
