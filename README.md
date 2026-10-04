@@ -260,7 +260,8 @@ npm run format:check
 npm audit
 ```
 
-The repository uses one npm lockfile. Tests cover CLI forwarding, CJS/ESM configs,
+The CLI uses the root npm lockfile; documentation has a separate private build
+package and lockfile in `docs/`. Tests cover CLI forwarding, CJS/ESM configs,
 workspace detection, migration collisions, rollback, interrupted operations,
 restoration, and publish-artifact installation/type checking. `prepack` builds the
 CLI and declarations automatically. Importing `fnspm` does not execute the CLI.
