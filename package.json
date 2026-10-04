@@ -1,61 +1,61 @@
 {
-  "name": "fnspm",
-  "module": "index.ts",
-  "type": "commonjs",
-  "version": "0.2.1",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "npmignore": "^0.3.1",
-    "tsc-alias": "^1.8.10"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "bin": {
-    "fnspm": "dist/index.js"
-  },
-  "scripts": {
-    "build": "tsc && tsc-alias",
-    "start": "node dist/index.js",
-    "prepack": "npmignore --auto"
-  },
-  "dependencies": {
-    "enquirer": "^2.4.1"
-  },
-  "_moduleAliases": {
-    "@": "src"
-  },
-  "files": [
-    "dist/src/utils/types.d.ts",
-    "dist/**/*.js"
-  ],
-  "permissions": "755",
-  "license": "GPL-3.0",
-  "private": false,
-  "author": "Marin-Eusebiu Șerban",
-  "description": "A unified command-line interface for managing packages across multiple package managers (npm, yarn, pnpm, bun, and deno) with macOS optimization for iCloud sync and automatic package manager detection.",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sebytza23/Fast-No-Sync-Package-Manager.git"
-  },
-  "main": "dist/index.js",
-  "keywords": [
-    "package-manager",
-    "npm",
-    "yarn",
-    "pnpm",
-    "bun",
-    "deno",
-    "nosync"
-  ],
-  "types": "./dist/src/utils/types.d.ts",
-  "publishConfig": {
-    "ignore": [
-      "!dist/",
-      "!dist/src/utils/types.d.ts",
-      "src/",
-      "test/",
-      "*.ts"
-    ]
-  }
+    "name": "fnspm",
+    "type": "commonjs",
+    "version": "0.3.0",
+    "devDependencies": {
+        "@types/cross-spawn": "^6.0.6",
+        "@types/node": "^22.0.0",
+        "prettier": "^3.9.9",
+        "typescript": "~5.9.3"
+    },
+    "bin": {
+        "fnspm": "dist/index.js"
+    },
+    "scripts": {
+        "build": "node scripts/clean.cjs && tsc",
+        "check": "tsc --noEmit",
+        "test": "npm run build && node scripts/test.cjs",
+        "test:package": "node scripts/test-package.cjs",
+        "start": "node dist/index.js",
+        "prepack": "npm run build",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test:managers": "npm run build && node scripts/test-managers.cjs"
+    },
+    "dependencies": {
+        "cross-spawn": "^7.0.6",
+        "enquirer": "^2.4.1"
+    },
+    "files": [
+        "dist/",
+        "CHANGELOG.md"
+    ],
+    "license": "GPL-3.0-only",
+    "private": false,
+    "author": "Marin-Eusebiu Șerban",
+    "description": "A package manager CLI wrapper with automatic detection and safe, reversible local dependency storage.",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sebytza23/Fast-No-Sync-Package-Manager.git"
+    },
+    "main": "dist/index.js",
+    "keywords": [
+        "package-manager",
+        "npm",
+        "yarn",
+        "pnpm",
+        "bun",
+        "deno",
+        "nosync"
+    ],
+    "types": "dist/index.d.ts",
+    "engines": {
+        "node": ">=22"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    }
 }

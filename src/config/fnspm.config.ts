@@ -1,18 +1,11 @@
-import { Config } from '@/utils/types';
-
+import type { Config } from '../utils/types';
 export const defaultConfig: Config = {
-    packageManager: {
-        default: "npm",
-        detection: "auto",
-    },
+    packageManager: { default: 'npm', detection: 'auto' },
     symlink: {
         enabled: true,
         addToGitIgnore: true,
-        nosyncName: "node_modules.nosync",
+        nosyncName: 'node_modules.nosync',
     },
-    debug: {
-        verbose: false,
-    },
+    debug: { verbose: false },
 };
-
-export default defaultConfig; 
+export default defaultConfig;

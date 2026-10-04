@@ -1,158 +1,152 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { prompt } from 'enquirer';
-import { defaultConfig } from '@/config/fnspm.config';
-import { Config } from './types';
-import { VALID_PACKAGE_MANAGERS } from '@/packages/factory';
+import { mergeConfig, validateConfig } from './config';
+import { CONFIG_FILE_NAMES, readPackageJson } from './project';
+import { VALID_PACKAGE_MANAGERS } from './package-managers';
+import type { Config, DetectionMode, PackageManagerType } from './types';
 
-export const initialize = async (args: string[]) => {
-    if (args.includes('-d') || args.includes('--default')) {
-        await createConfigFile(defaultConfig);
-        console.log('Created default configuration file');
-        return;
-    }
-
-    if (args.length > 1) {
-        const config = processCliArgs(args);
-        await createConfigFile(config);
-        return;
-    }
-
-    console.log('Welcome to FNSPM configuration!\n');
-
-    const answers = await prompt([
-        {
-            type: 'select',
-            name: 'packageManager',
-            message: 'Select default package manager:',
-            choices: VALID_PACKAGE_MANAGERS
-        },
-        {
-            type: 'select',
-            name: 'detection',
-            message: 'Choose detection mode:',
-            choices: ['auto', 'default', ...VALID_PACKAGE_MANAGERS]
-        },
-        {
-            type: 'toggle',
-            name: 'symlinkEnabled',
-            message: 'Enable symlink creation?',
-            initial: true
-        },
-        {
-            type: 'input',
-            name: 'nosyncName',
-            message: 'Nosync folder name:',
-            initial: 'node_modules.nosync',
-            skip() {
-                // @ts-ignore
-                return !this.state.answers.symlinkEnabled;
-              },
-        },
-        {
-            type: 'toggle', 
-            name: 'addToGitignore',
-            message: 'Add to .gitignore?',
-            initial: true,
-            skip(){
-                // @ts-ignore
-                return !this.state.answers.symlinkEnabled;
-            }
-        },
-        {
-            type: 'toggle',
-            name: 'verbose',
-            message: 'Enable verbose logging?',
-            initial: false
+export function processCliArgs(args: string[]): Config {
+    const config = mergeConfig();
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        const value = () => {
+            const next = args[++i];
+            if (!next || next.startsWith('-'))
+                throw new Error(`Missing value for ${arg}`);
+            return next;
+        };
+        const boolean = () => {
+            if (args[i + 1] === 'true' || args[i + 1] === 'false')
+                return args[++i] === 'true';
+            return true;
+        };
+        switch (arg) {
+            case '-d':
+            case '--default':
+                break;
+            case '--pm':
+                config.packageManager.default =
+                    value().toLowerCase() as PackageManagerType;
+                break;
+            case '--detection':
+                config.packageManager.detection =
+                    value().toLowerCase() as DetectionMode;
+                break;
+            case '--symlink':
+                config.symlink.enabled = boolean();
+                break;
+            case '--no-symlink':
+            case '--no-sync-folder':
+                config.symlink.enabled = false;
+                break;
+            case '--sync-folder':
+                config.symlink.nosyncName = value();
+                break;
+            case '--storage-path':
+                config.symlink.storagePath = value();
+                break;
+            case '--add-to-gitignore':
+                config.symlink.addToGitIgnore = boolean();
+                break;
+            case '--no-add-to-gitignore':
+                config.symlink.addToGitIgnore = false;
+                break;
+            case '--verbose':
+                config.debug.verbose = boolean();
+                break;
+            case '--no-verbose':
+                config.debug.verbose = false;
+                break;
+            default:
+                throw new Error(`Unknown initialization option: ${arg}`);
         }
-    ]).then(async (answers: any) => {
-        const config: Config = {
-            packageManager: {
-                default: answers.packageManager,
-            detection: answers.detection,
-        },
-        symlink: {
-            enabled: answers.symlinkEnabled,
-            nosyncName: answers.nosyncName,
-            addToGitIgnore: answers.addToGitignore
-        },
-        debug: {
-            verbose: answers.verbose
-        }};
-    
-        await createConfigFile(config);
-        console.log('\nConfiguration file created successfully!');
-    });
-} 
-
-function processCliArgs(args: string[]): Config {
-    const config = { ...defaultConfig };
-    
-    if (args.includes('--no-symlink')) {
-        config.symlink.enabled = false;
     }
-
-    if (args.includes('--add-to-gitignore')) {
-        config.symlink.addToGitIgnore = true;
-    }
-
-    if (args.includes('--no-add-to-gitignore')) {
-        config.symlink.addToGitIgnore = false;
-    }
-
-    if (args.includes('--verbose')) {
-        config.debug.verbose = true;
-    }
-
-    if (args.includes('--no-verbose')) {
-        config.debug.verbose = false;
-    }
-    
-    if (args.includes('--sync-folder')) {
-        config.symlink.nosyncName = args[args.indexOf('--sync-folder') + 1];
-    }
-
-    if (args.includes('--no-sync-folder')) {
-        config.symlink.nosyncName = 'node_modules.nosync';
-    }
-
+    validateConfig(config);
     return config;
 }
 
-async function createConfigFile(config: Config) {
-    let configContent = "/** @type {import('fnspm').Config} */";
-    let fileName = 'fnspm.config';
-    
-    try {
-        const packageJsonPath = path.join(process.cwd(), 'package.json');
-        if (fs.existsSync(packageJsonPath)) {
-            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-            
-            if (packageJson.type === 'module') {
-                // ESM
-                configContent = `const config = ${JSON.stringify(config, null, 2)};`;
-                configContent += `export default config;`;
-                fileName += '.mjs';
-            } else {
-                // CommonJS
-                configContent = `const config = ${JSON.stringify(config, null, 2)};`;
-                configContent += `module.exports = config;`;
-                fileName += '.cjs';
-            }
-        } else {
-            configContent = `const config = ${JSON.stringify(config, null, 2)};`;
-            configContent += `module.exports = config;`;
-            fileName += '.js';
-        }
-
-        fs.writeFileSync(path.join(process.cwd(), fileName), configContent);
-        console.log(`Created configuration file: ${fileName}`);
-    } catch (error) {
-        console.error('Error creating configuration file:', error);
-        configContent = `const config = ${JSON.stringify(config, null, 2)};`;
-        configContent += `module.exports = config;`;
-        fileName += '.js';
-        fs.writeFileSync(path.join(process.cwd(), fileName), configContent);
-        console.log(`Created fallback configuration file: ${fileName}`);
+export function createConfigFile(root: string, config: Config): string {
+    validateConfig(config);
+    if (
+        CONFIG_FILE_NAMES.some((name) => fs.existsSync(path.join(root, name)))
+    ) {
+        throw new Error(
+            'A FNSPM configuration already exists. Edit it instead of overwriting it.',
+        );
     }
-} 
+    const esm = readPackageJson(root).type === 'module';
+    const file = path.join(root, `fnspm.config.${esm ? 'mjs' : 'cjs'}`);
+    const content = `/** @type {import('fnspm').UserConfig} */\nconst config = ${JSON.stringify(config, null, 2)};\n\n${esm ? 'export default config;' : 'module.exports = config;'}\n`;
+    fs.writeFileSync(file, content, { flag: 'wx' });
+    return file;
+}
+
+export async function initialize(args: string[], root: string): Promise<void> {
+    let config: Config;
+    if (args.length) config = processCliArgs(args);
+    else {
+        if (!process.stdin.isTTY || !process.stdout.isTTY)
+            throw new Error(
+                'Interactive initialization requires a terminal; use initialize --default.',
+            );
+        const answers = await prompt<{
+            manager: PackageManagerType;
+            detection: DetectionMode;
+            symlink: boolean;
+            nosyncName: string;
+            gitignore: boolean;
+            verbose: boolean;
+        }>([
+            {
+                type: 'select',
+                name: 'manager',
+                message: 'Default package manager:',
+                choices: VALID_PACKAGE_MANAGERS,
+            },
+            {
+                type: 'select',
+                name: 'detection',
+                message: 'Detection mode:',
+                choices: ['auto', 'default', ...VALID_PACKAGE_MANAGERS],
+            },
+            {
+                type: 'confirm',
+                name: 'symlink',
+                message: 'Move dependencies to a local nosync folder?',
+                initial: true,
+            },
+            {
+                type: 'input',
+                name: 'nosyncName',
+                message: 'Nosync folder name:',
+                initial: 'node_modules.nosync',
+            },
+            {
+                type: 'confirm',
+                name: 'gitignore',
+                message: 'Add local dependency paths to .gitignore?',
+                initial: true,
+            },
+            {
+                type: 'confirm',
+                name: 'verbose',
+                message: 'Enable verbose logging?',
+                initial: false,
+            },
+        ]);
+        config = mergeConfig({
+            packageManager: {
+                default: answers.manager,
+                detection: answers.detection,
+            },
+            symlink: {
+                enabled: answers.symlink,
+                nosyncName: answers.nosyncName,
+                addToGitIgnore: answers.gitignore,
+            },
+            debug: { verbose: answers.verbose },
+        });
+    }
+    console.info(`Created configuration: ${createConfigFile(root, config)}`);
+}

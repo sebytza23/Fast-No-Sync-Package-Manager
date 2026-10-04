@@ -184,4 +184,6 @@ dist
 node_modules
 node_modules.nosync/
 
-.npmignore
+# FNSPM local migration metadata
+.fnspm-state.json
+.fnspm-operation.lock

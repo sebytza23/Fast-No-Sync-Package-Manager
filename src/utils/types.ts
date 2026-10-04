@@ -1,26 +1,32 @@
-import { PACKAGE_MANAGERS } from '@/utils/package-managers';
-
-export type PackageManagerType = keyof typeof PACKAGE_MANAGERS;
-export type PackageManagerLockFile = typeof PACKAGE_MANAGERS[PackageManagerType]['lockFiles'][number];
+import type { PACKAGE_MANAGERS, PackageManagerType } from './package-managers';
+export type { PackageManagerType } from './package-managers';
+export type PackageManagerLockFile =
+    (typeof PACKAGE_MANAGERS)[PackageManagerType]['lockFiles'][number];
 export type DetectionMode = 'auto' | 'default' | PackageManagerType;
 
 export interface PackageManagerConfig {
-  default: PackageManagerType;
-  detection: DetectionMode;
+    default: PackageManagerType;
+    detection: DetectionMode;
 }
-
 export interface SymlinkConfig {
-  enabled: boolean;
-  addToGitIgnore: boolean;
-  nosyncName: string;
+    enabled: boolean;
+    addToGitIgnore: boolean;
+    /** A single directory name inside the project. */
+    nosyncName: string;
+    /** Optional absolute path to a dedicated dependency directory on the same filesystem. */
+    storagePath?: string;
 }
-
 export interface DebugConfig {
-  verbose: boolean;
+    verbose: boolean;
 }
-
 export interface Config {
-  packageManager: PackageManagerConfig;
-  symlink: SymlinkConfig;
-  debug: DebugConfig;
+    packageManager: PackageManagerConfig;
+    symlink: SymlinkConfig;
+    debug: DebugConfig;
+}
+/** Configuration files may override individual settings without repeating defaults. */
+export interface UserConfig {
+    packageManager?: Partial<PackageManagerConfig>;
+    symlink?: Partial<SymlinkConfig>;
+    debug?: Partial<DebugConfig>;
 }
