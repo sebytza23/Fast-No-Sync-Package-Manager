@@ -125,6 +125,8 @@ function probeWindowsBunPaths(archive) {
         );
         const wrappedRoot = path.join(probe, 'wrapped');
         fs.cpSync(workspace, wrappedRoot, { recursive: true });
+        const aliasedRoot = path.join(probe, 'aliased');
+        fs.cpSync(workspace, aliasedRoot, { recursive: true });
         const native = spawn.sync('bun', ['install'], {
             cwd: workspace,
             env,
@@ -158,6 +160,11 @@ function probeWindowsBunPaths(archive) {
                     path.join(root, 'packages', 'web', 'package.json'),
                 ),
             );
+            command(
+                process.execPath,
+                ['-e', "if(require('fnspm-fixture')!==42)process.exit(1)"],
+                path.join(root, 'packages', 'web'),
+            );
             const lock = fs.readFileSync(path.join(root, 'bun.lock'), 'utf8');
             assert.match(lock, /"packages\/web"/);
             assert.doesNotMatch(lock, /[A-Za-z]:[\\/]/);
@@ -173,15 +180,7 @@ function probeWindowsBunPaths(archive) {
         verify(wrappedRoot);
         // A junction on the runner drive can point at a project on the OS drive.
         // The wrapper must also normalize this alias without changing native flags.
-        fs.symlinkSync(fs.realpathSync.native(workspace), alias, 'junction');
-        // Use a fresh fixture: the failing native install may have written a lock.
-        fs.rmSync(workspace, { recursive: true, force: true });
-        fs.cpSync(wrappedRoot, workspace, { recursive: true });
-        fs.rmSync(path.join(workspace, 'node_modules'), {
-            recursive: true,
-            force: true,
-        });
-        fs.rmSync(path.join(workspace, 'bun.lock'), { force: true });
+        fs.symlinkSync(fs.realpathSync.native(aliasedRoot), alias, 'junction');
         verify(alias);
         console.log(
             `Windows Bun path aliases: direct native status ${native.status}; FNSPM installs, frozen installs, workspace links, relative lock keys, conversion and restoration pass through short paths and junctions.`,
