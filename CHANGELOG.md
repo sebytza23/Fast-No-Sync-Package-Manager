@@ -12,6 +12,8 @@
   link recovery, interrupted restoration cleanup, and missing ignore rules.
 - Verify all five native managers and workspace layouts, including Yarn PnP and
   cache-only Deno, using local fixtures rather than public registry dependencies.
+- Expand Windows short paths and resolve directory aliases before launching Bun,
+  avoiding workspace link failures without changing native arguments or configs.
 - Normalize repository line endings and run the full manager suite on Windows,
   Linux, and macOS with Node.js 22 and 24.
 

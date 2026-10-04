@@ -88,16 +88,14 @@ function command(executable, args, cwd) {
     return result.stdout;
 }
 
-function probeWindowsBun(archive) {
-    if (
-        process.platform !== 'win32' ||
-        path.parse(os.tmpdir()).root.toLowerCase() ===
-            path.parse(scratch).root.toLowerCase()
-    )
-        return;
+function probeWindowsBunPaths(archive) {
+    if (process.platform !== 'win32') return;
+    // Windows' temporary directory can contain an 8.3 alias (RUNNER~1).
+    // Keep that spelling here to exercise the actual native failure.
     const probe = fs.mkdtempSync(
-        path.join(os.tmpdir(), 'fnspm-bun-cross-drive-'),
+        path.join(os.tmpdir(), 'fnspm-bun-paths with spaces-'),
     );
+    const alias = path.join(scratch, 'bun-project-junction');
     try {
         const workspace = path.join(probe, 'workspace');
         const section = path.join(workspace, 'packages', 'web');
@@ -122,62 +120,6 @@ function probeWindowsBun(archive) {
                 dependencies: { 'fnspm-fixture': 'file:../../../fixture.tgz' },
             }),
         );
-        console.log(
-            'Bun path diagnostic:',
-            JSON.stringify({
-                workspace,
-                realpath: fs.realpathSync(workspace),
-                nativeRealpath: fs.realpathSync.native(workspace),
-                parentCwd: process.cwd(),
-                PWD: env.PWD,
-                INIT_CWD: env.INIT_CWD,
-            }),
-        );
-        for (const variant of [
-            'canonical',
-            'pwd',
-            'explicit-cwd',
-            'direct',
-            'backend',
-        ]) {
-            const trial = path.join(probe, variant);
-            fs.cpSync(workspace, trial, { recursive: true });
-            const canonical = fs.realpathSync.native(trial);
-            const binary = path.join(
-                process.env.RUNNER_TEMP,
-                'fnspm-managers',
-                'node_modules',
-                'bun',
-                'bin',
-                'bun.exe',
-            );
-            const result = spawn.sync(
-                variant === 'direct' ? binary : 'bun',
-                variant === 'explicit-cwd'
-                    ? ['--cwd', canonical, 'install']
-                    : variant === 'backend'
-                      ? ['install', '--backend=copyfile']
-                      : ['install'],
-                {
-                    cwd: canonical,
-                    env:
-                        variant === 'pwd'
-                            ? { ...env, PWD: canonical, INIT_CWD: canonical }
-                            : env,
-                    encoding: 'utf8',
-                    timeout: 15000,
-                },
-            );
-            console.log(
-                'Bun variant',
-                variant,
-                JSON.stringify({
-                    status: result.status,
-                    error: result.error?.message,
-                    output: result.stdout + result.stderr,
-                }),
-            );
-        }
         const wrappedRoot = path.join(probe, 'wrapped');
         fs.cpSync(workspace, wrappedRoot, { recursive: true });
         const native = spawn.sync('bun', ['install'], {
@@ -186,31 +128,63 @@ function probeWindowsBun(archive) {
             encoding: 'utf8',
             timeout: 60000,
         });
-        if (native.status === 0) {
-            console.log(
-                'Native Windows Bun cross-drive workspace probe passed.',
-            );
-            return;
-        }
         assert.ok(!native.error, native.error?.message);
-        assert.match(
-            native.stdout + native.stderr,
-            /failed to symlink dependencies/,
-        );
-        const wrapped = spawn.sync(
-            process.execPath,
-            [cli, '--pm', 'bun', 'install'],
-            { cwd: wrappedRoot, env, encoding: 'utf8', timeout: 60000 },
-        );
-        assert.equal(wrapped.status, native.status, wrapped.stderr);
-        assert.match(
-            wrapped.stdout + wrapped.stderr,
-            /failed to symlink dependencies/,
-        );
+        if (native.status !== 0)
+            assert.match(
+                native.stdout + native.stderr,
+                /failed to symlink dependencies/,
+            );
+        function verify(root) {
+            command(process.execPath, [cli, '--pm', 'bun', 'install'], root);
+            command(
+                process.execPath,
+                [cli, '--pm', 'bun', 'install', '--frozen-lockfile'],
+                root,
+            );
+            const manifest = command(
+                process.execPath,
+                [
+                    '-e',
+                    "if(require('fnspm-fixture')!==42)process.exit(1);process.stdout.write(require.resolve('fnspm-workspace-web/package.json'))",
+                ],
+                root,
+            );
+            assert.equal(
+                fs.realpathSync.native(manifest),
+                fs.realpathSync.native(
+                    path.join(root, 'packages', 'web', 'package.json'),
+                ),
+            );
+            const lock = fs.readFileSync(path.join(root, 'bun.lock'), 'utf8');
+            assert.match(lock, /"packages\/web"/);
+            assert.doesNotMatch(lock, /[A-Za-z]:[\\/]/);
+            assert.ok(
+                fs.lstatSync(path.join(root, 'node_modules')).isSymbolicLink(),
+            );
+            command(process.execPath, [cli, 'doctor'], root);
+            command(process.execPath, [cli, 'restore'], root);
+            assert.ok(
+                fs.lstatSync(path.join(root, 'node_modules')).isDirectory(),
+            );
+        }
+        verify(wrappedRoot);
+        // A junction on the runner drive can point at a project on the OS drive.
+        // The wrapper must also normalize this alias without changing native flags.
+        fs.symlinkSync(fs.realpathSync.native(workspace), alias, 'junction');
+        // Use a fresh fixture: the failing native install may have written a lock.
+        fs.rmSync(workspace, { recursive: true, force: true });
+        fs.cpSync(wrappedRoot, workspace, { recursive: true });
+        fs.rmSync(path.join(workspace, 'node_modules'), {
+            recursive: true,
+            force: true,
+        });
+        fs.rmSync(path.join(workspace, 'bun.lock'), { force: true });
+        verify(alias);
         console.log(
-            'Native Windows Bun cross-drive workspace limitation reproduced directly; FNSPM preserves its failure status. Full workspace tests use the runner volume.',
+            `Windows Bun path aliases: direct native status ${native.status}; FNSPM installs, frozen installs, workspace links, relative lock keys, conversion and restoration pass through short paths and junctions.`,
         );
     } finally {
+        fs.rmSync(alias, { recursive: true, force: true });
         fs.rmSync(probe, { recursive: true, force: true });
     }
 }
@@ -244,7 +218,7 @@ async function main() {
             ),
         )[0];
         if (process.argv.slice(2).includes('bun'))
-            probeWindowsBun(path.join(scratch, pack.filename));
+            probeWindowsBunPaths(path.join(scratch, pack.filename));
         if (process.argv.slice(2).includes('deno'))
             registryURL = await startRegistry(
                 path.join(scratch, pack.filename),

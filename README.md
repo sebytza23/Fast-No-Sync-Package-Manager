@@ -215,10 +215,12 @@ guarantee about a provider's behavior.
 - Deno can use a global cache or local `node_modules`, depending on its
   [configuration](https://docs.deno.com/runtime/reference/deno_json/). Only an
   existing local dependency directory can be migrated.
-- Bun 1.4.2 can fail to link Windows workspaces across drive boundaries. The
-  native tests reproduce this with Bun directly and check that FNSPM preserves
-  its failure status; workspace tests on the runner volume succeed. Keep the
-  project and Bun installation on the same drive when encountering this error.
+- FNSPM expands Windows short directory names (such as `RUNNER~1`) and resolves
+  directory aliases before launching Bun. This avoids Bun's workspace link
+  failure when its current directory and resolved manifest use different path
+  spellings. Native tests verify installs and frozen installs through short
+  paths and junctions, including projects and Bun installed on different drives,
+  workspace links, relative lockfile keys, automatic conversion, and restoration.
 - A valid project-local symlink from FNSPM 0.2 that matches `nosyncName` is adopted
   without moving or deleting dependency files. Run `migrate --dry-run` to inspect
   adoption, or `migrate` to record ownership before `restore`. Automatic conversion

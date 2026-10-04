@@ -1,4 +1,5 @@
 import spawn from 'cross-spawn';
+import fs from 'node:fs';
 import { constants } from 'node:os';
 import type { PackageManagerType } from '../utils/types';
 
@@ -19,6 +20,10 @@ export default class PackageManager {
         cwd = process.cwd(),
         verbose = false,
     ): Promise<void> {
+        // Bun compares getcwd() with Windows' final file path when linking workspaces.
+        // Expand 8.3 names and drive aliases so both refer to the same path spelling.
+        if (this.name === 'bun' && process.platform === 'win32')
+            cwd = fs.realpathSync.native(cwd);
         if (verbose)
             console.error(
                 `Running: ${[this.name, ...args].map((arg) => JSON.stringify(arg)).join(' ')}`,
