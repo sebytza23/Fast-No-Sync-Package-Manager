@@ -1,7 +1,7 @@
 # FNSPM — Fast No Sync Package Manager
 
-This branch prepares the upcoming 1.0 release. `config --show` and `doctor --fix`
-are additions to the currently published npm version, 0.3.0.
+Version 0.4.0 adds configuration inspection, guided recovery, complete operation
+locks, and a fix for Bun workspace installs through Windows path aliases.
 
 FNSPM runs your existing package manager and optionally keeps `node_modules` in a
 separate local directory connected by a symlink. It supports npm, Yarn, pnpm,

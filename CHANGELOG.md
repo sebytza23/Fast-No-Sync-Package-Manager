@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — preparing 1.0.0
+## 0.4.0 — 2026-10-04
 
 - Hold operation locks across restoration, the native command, and conversion;
   coordinate workspace roots and sections, including untracked shared storage.
