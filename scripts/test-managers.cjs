@@ -122,6 +122,8 @@ function probeWindowsBun(archive) {
                 dependencies: { 'fnspm-fixture': 'file:../../../fixture.tgz' },
             }),
         );
+        const wrappedRoot = path.join(probe, 'wrapped');
+        fs.cpSync(workspace, wrappedRoot, { recursive: true });
         const native = spawn.sync('bun', ['install'], {
             cwd: workspace,
             env,
@@ -142,7 +144,7 @@ function probeWindowsBun(archive) {
         const wrapped = spawn.sync(
             process.execPath,
             [cli, '--pm', 'bun', 'install'],
-            { cwd: workspace, env, encoding: 'utf8', timeout: 60000 },
+            { cwd: wrappedRoot, env, encoding: 'utf8', timeout: 60000 },
         );
         assert.equal(wrapped.status, native.status, wrapped.stderr);
         assert.match(
