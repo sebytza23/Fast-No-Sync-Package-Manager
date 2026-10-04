@@ -176,7 +176,7 @@ test('operation lock prevents concurrent mutation', (t) => {
     fs.writeFileSync(path.join(root, LOCK_FILE), 'running');
     assert.throws(
         () => migrateDependencies(root, mergeConfig()),
-        /operation may be running/,
+        /operation is running or was interrupted/,
     );
     assert.ok(fs.lstatSync(path.join(root, 'node_modules')).isDirectory());
 });

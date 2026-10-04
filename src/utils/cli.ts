@@ -48,7 +48,47 @@ export function shouldAutoMigrate(args: string[]): boolean {
     );
 }
 
-export function isDependencyCommand(args: string[]): boolean {
+export function isDependencyCommand(
+    args: string[],
+    manager?: PackageManagerType,
+): boolean {
+    // Native managers accept options before the command. Skip their values so
+    // `--filter web install` and `--workspace web ci` still restore tracked storage.
+    const valueOptions = new Set([
+        '--filter',
+        '--filter-prod',
+        '-F',
+        '--workspace',
+        '--scope',
+        '--registry',
+        '--cache',
+        '--config',
+        '-c',
+        '--loglevel',
+        '--location',
+        '--userconfig',
+        '--globalconfig',
+        '--store-dir',
+        '--modules-folder',
+    ]);
+    if (manager === 'npm') valueOptions.add('-w');
+    let command: string | undefined;
+    for (let i = 0; i < args.length && args[i] !== '--'; i++) {
+        const arg = args[i];
+        if (valueOptions.has(arg)) {
+            i++;
+            continue;
+        }
+        if (arg.startsWith('-')) continue;
+        if (manager === 'pnpm' && ['recursive', 'multi', 'm'].includes(arg))
+            continue;
+        if (manager === 'yarn' && arg === 'workspace') {
+            i++;
+            continue;
+        }
+        command = arg;
+        break;
+    }
     return (
         [
             'install',
@@ -61,6 +101,15 @@ export function isDependencyCommand(args: string[]): boolean {
             'update',
             'up',
             'upgrade',
-        ].includes(args[0]) && shouldAutoMigrate(args)
+            'clean-install',
+            'install-test',
+            'it',
+            'un',
+            'uni',
+            'rebuild',
+            'rb',
+            'prune',
+            'dedupe',
+        ].includes(command ?? '') && shouldAutoMigrate(args)
     );
 }

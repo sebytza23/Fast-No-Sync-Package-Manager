@@ -13,6 +13,27 @@ const {
     directoryLink,
 } = require('./support.cjs');
 const { parseRunArgs, shouldAutoMigrate } = require('../dist/src/utils/cli.js');
+const { isDependencyCommand } = require('../dist/src/utils/cli.js');
+
+test('native options before install commands retain dependency-operation protection', () => {
+    for (const [manager, args] of [
+        ['npm', ['--silent', '--workspace', 'web', 'ci']],
+        ['npm', ['-w', 'web', 'install']],
+        ['pnpm', ['--filter', 'web', 'install']],
+        ['pnpm', ['-w', 'install']],
+        ['pnpm', ['recursive', 'install']],
+        ['yarn', ['workspace', 'web', 'add', 'example']],
+    ])
+        assert.equal(isDependencyCommand(args, manager), true);
+    for (const [manager, args] of [
+        ['npm', ['--workspace', 'install', 'run', 'build']],
+        ['npm', ['run', 'install']],
+        ['npm', ['exec', 'install']],
+        ['pnpm', ['--filter', 'install', 'list']],
+        ['pnpm', ['install', '--global']],
+    ])
+        assert.equal(isDependencyCommand(args, manager), false);
+});
 
 test('preserve spaces and shell metacharacters literally', (t) => {
     const root = fixture(t);
