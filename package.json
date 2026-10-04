@@ -1,7 +1,7 @@
 {
     "name": "fnspm",
     "type": "commonjs",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "devDependencies": {
         "@types/cross-spawn": "^6.0.6",
         "@types/node": "^22.0.0",
@@ -37,6 +37,10 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/sebytza23/Fast-No-Sync-Package-Manager.git"
+    },
+    "homepage": "https://sebytza23.github.io/Fast-No-Sync-Package-Manager/",
+    "bugs": {
+        "url": "https://github.com/sebytza23/Fast-No-Sync-Package-Manager/issues"
     },
     "main": "dist/index.js",
     "keywords": [

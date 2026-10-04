@@ -1,12 +1,5 @@
 # Changelog
 
-## 1.0.1 — 2026-10-04
-
-- Publish the documentation website link in npm package metadata and the README,
-  making the guides available from the npm Homepage link and `npm docs fnspm`.
-- Include the issue tracker URL in package metadata. CLI behavior and runtime
-  dependencies are unchanged from 1.0.0.
-
 ## 1.0.0 — 2026-10-04
 
 - Hold operation locks across restoration, the native command, and conversion;

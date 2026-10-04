@@ -1,0 +1,22 @@
+{
+    "version": "0.3.0",
+    "sourceRef": "v0.3.0",
+    "sourceBranch": "v0.3.0",
+    "pages": [
+        {
+            "slug": "",
+            "file": "reference.md",
+            "title": "0.3 reference",
+            "group": "Archive",
+            "description": "Configuration, commands and dependency storage from the original 0.3.0 release README.",
+            "sourcePath": "README.md"
+        },
+        {
+            "slug": "changelog",
+            "file": null,
+            "title": "Changelog",
+            "group": "Releases",
+            "description": "Release notes published with FNSPM 0.3.0."
+        }
+    ]
+}
