@@ -122,6 +122,62 @@ function probeWindowsBun(archive) {
                 dependencies: { 'fnspm-fixture': 'file:../../../fixture.tgz' },
             }),
         );
+        console.log(
+            'Bun path diagnostic:',
+            JSON.stringify({
+                workspace,
+                realpath: fs.realpathSync(workspace),
+                nativeRealpath: fs.realpathSync.native(workspace),
+                parentCwd: process.cwd(),
+                PWD: env.PWD,
+                INIT_CWD: env.INIT_CWD,
+            }),
+        );
+        for (const variant of [
+            'canonical',
+            'pwd',
+            'explicit-cwd',
+            'direct',
+            'backend',
+        ]) {
+            const trial = path.join(probe, variant);
+            fs.cpSync(workspace, trial, { recursive: true });
+            const canonical = fs.realpathSync.native(trial);
+            const binary = path.join(
+                process.env.RUNNER_TEMP,
+                'fnspm-managers',
+                'node_modules',
+                'bun',
+                'bin',
+                'bun.exe',
+            );
+            const result = spawn.sync(
+                variant === 'direct' ? binary : 'bun',
+                variant === 'explicit-cwd'
+                    ? ['--cwd', canonical, 'install']
+                    : variant === 'backend'
+                      ? ['install', '--backend=copyfile']
+                      : ['install'],
+                {
+                    cwd: canonical,
+                    env:
+                        variant === 'pwd'
+                            ? { ...env, PWD: canonical, INIT_CWD: canonical }
+                            : env,
+                    encoding: 'utf8',
+                    timeout: 15000,
+                },
+            );
+            console.log(
+                'Bun variant',
+                variant,
+                JSON.stringify({
+                    status: result.status,
+                    error: result.error?.message,
+                    output: result.stdout + result.stderr,
+                }),
+            );
+        }
         const wrappedRoot = path.join(probe, 'wrapped');
         fs.cpSync(workspace, wrappedRoot, { recursive: true });
         const native = spawn.sync('bun', ['install'], {
