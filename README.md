@@ -7,6 +7,8 @@ locks, and a fix for Bun workspace installs through Windows path aliases.
 for setup guides, project and workspace configuration, the CLI reference,
 troubleshooting, and release notes.
 
+You can also open the documentation with `npm docs fnspm`.
+
 FNSPM runs your existing package manager and optionally keeps `node_modules` in a
 separate local directory connected by a symlink. It supports npm, Yarn, pnpm,
 Bun, and Deno command forwarding. Node.js 22 or newer is required.
