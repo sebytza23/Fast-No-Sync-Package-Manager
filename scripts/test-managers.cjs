@@ -7,7 +7,9 @@ const spawn = require('cross-spawn');
 const { fork } = require('node:child_process');
 const cli = path.resolve(__dirname, '../dist/index.js');
 const scratch = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'fnspm-native-')),
+    fs.mkdtempSync(
+        path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'fnspm-native-'),
+    ),
 );
 const env = {
     ...process.env,
@@ -85,6 +87,75 @@ function command(executable, args, cwd) {
         );
     return result.stdout;
 }
+
+function probeWindowsBun(archive) {
+    if (
+        process.platform !== 'win32' ||
+        path.parse(os.tmpdir()).root.toLowerCase() ===
+            path.parse(scratch).root.toLowerCase()
+    )
+        return;
+    const probe = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'fnspm-bun-cross-drive-'),
+    );
+    try {
+        const workspace = path.join(probe, 'workspace');
+        const section = path.join(workspace, 'packages', 'web');
+        fs.mkdirSync(section, { recursive: true });
+        fs.copyFileSync(archive, path.join(probe, 'fixture.tgz'));
+        fs.writeFileSync(
+            path.join(workspace, 'package.json'),
+            JSON.stringify({
+                name: 'fnspm-workspace-root',
+                private: true,
+                version: '1.0.0',
+                workspaces: ['packages/*'],
+                dependencies: { 'fnspm-fixture': 'file:../fixture.tgz' },
+            }),
+        );
+        fs.writeFileSync(
+            path.join(section, 'package.json'),
+            JSON.stringify({
+                name: 'fnspm-workspace-web',
+                private: true,
+                version: '1.0.0',
+                dependencies: { 'fnspm-fixture': 'file:../../../fixture.tgz' },
+            }),
+        );
+        const native = spawn.sync('bun', ['install'], {
+            cwd: workspace,
+            env,
+            encoding: 'utf8',
+            timeout: 60000,
+        });
+        if (native.status === 0) {
+            console.log(
+                'Native Windows Bun cross-drive workspace probe passed.',
+            );
+            return;
+        }
+        assert.ok(!native.error, native.error?.message);
+        assert.match(
+            native.stdout + native.stderr,
+            /failed to symlink dependencies/,
+        );
+        const wrapped = spawn.sync(
+            process.execPath,
+            [cli, '--pm', 'bun', 'install'],
+            { cwd: workspace, env, encoding: 'utf8', timeout: 60000 },
+        );
+        assert.equal(wrapped.status, native.status, wrapped.stderr);
+        assert.match(
+            wrapped.stdout + wrapped.stderr,
+            /failed to symlink dependencies/,
+        );
+        console.log(
+            'Native Windows Bun cross-drive workspace limitation reproduced directly; FNSPM preserves its failure status. Full workspace tests use the runner volume.',
+        );
+    } finally {
+        fs.rmSync(probe, { recursive: true, force: true });
+    }
+}
 async function main() {
     try {
         const dependency = path.join(scratch, 'fixture');
@@ -114,6 +185,8 @@ async function main() {
                 dependency,
             ),
         )[0];
+        if (process.argv.slice(2).includes('bun'))
+            probeWindowsBun(path.join(scratch, pack.filename));
         if (process.argv.slice(2).includes('deno'))
             registryURL = await startRegistry(
                 path.join(scratch, pack.filename),
