@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased — preparing 1.0.0
+
+- Hold operation locks across restoration, the native command, and conversion;
+  coordinate workspace roots and sections, including untracked shared storage.
+- Add `config --show` with per-setting origins, manager selection reasons,
+  project/dependency roots, and optional machine-readable JSON.
+- Add `doctor --fix --dry-run` and explicit `doctor --fix` for identity-checked
+  link recovery, interrupted restoration cleanup, and missing ignore rules.
+- Verify all five native managers and workspace layouts, including Yarn PnP and
+  cache-only Deno, using local fixtures rather than public registry dependencies.
+- Normalize repository line endings and run the full manager suite on Windows,
+  Linux, and macOS with Node.js 22 and 24.
+
+### Compatibility contract for 1.0
+
+- Preserve 0.3 configuration file formats, settings, closest-config resolution,
+  native argument forwarding, exit codes, and local automatic conversion.
+- `config get`, `config set`, and other native config commands remain forwarded;
+  only the `config --show` inspection form belongs to FNSPM.
+- Concurrent or nested FNSPM operations targeting the same dependency scope fail
+  promptly before starting another native command. External package managers and
+  cloud clients do not participate in FNSPM locking.
+- Recovery never removes unknown locks, adopts foreign links, or overwrites
+  conflicting dependency directories.
+
 ## 0.3.0 — 2026-10-01
 
 - Require Node.js 22 or newer; use a single npm development lockfile.

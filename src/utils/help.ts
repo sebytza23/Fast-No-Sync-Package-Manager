@@ -4,7 +4,8 @@ export function displayHelp(): void {
 Usage:
   fnspm [--pm <manager>] [--debug] <command> [...native arguments]
   fnspm initialize [options]
-  fnspm doctor [--pm <manager>]
+  fnspm config --show [--json] [--pm <manager>]
+  fnspm doctor [--pm <manager>] [--fix [--dry-run]]
   fnspm migrate [--dry-run]
   fnspm restore [--dry-run]
   fnspm --help | --version

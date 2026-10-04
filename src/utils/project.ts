@@ -68,6 +68,13 @@ export function findMigrationRoot(cwd = process.cwd()): string {
 
 /** Native installs in a workspace section can replace the shared dependency directory. */
 export function findManagedWorkspaceRoots(cwd: string): string[] {
+    return findWorkspaceRoots(cwd).filter((directory) =>
+        fs.existsSync(path.join(directory, '.fnspm-state.json')),
+    );
+}
+
+/** Include untracked shared workspace directories in native-operation locking. */
+export function findWorkspaceRoots(cwd: string): string[] {
     const roots: string[] = [];
     let directory = path.resolve(cwd);
     while (!fs.existsSync(path.join(directory, '.git'))) {
@@ -75,9 +82,8 @@ export function findManagedWorkspaceRoots(cwd: string): string[] {
         if (parent === directory) break;
         directory = parent;
         if (
-            fs.existsSync(path.join(directory, '.fnspm-state.json')) &&
-            (fs.existsSync(path.join(directory, 'pnpm-workspace.yaml')) ||
-                readPackageJson(directory).workspaces)
+            fs.existsSync(path.join(directory, 'pnpm-workspace.yaml')) ||
+            readPackageJson(directory).workspaces
         )
             roots.push(directory);
     }

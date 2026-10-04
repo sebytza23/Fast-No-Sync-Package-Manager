@@ -19,9 +19,14 @@ jobs:
                   node-version: ${{ matrix.node }}
                   cache: npm
             - run: npm ci
+            - name: Install pinned native package managers
+              shell: bash
+              run: |
+                  npm install --prefix "$RUNNER_TEMP/fnspm-managers" --no-audit --no-fund @yarnpkg/cli-dist@4.18.1 deno@2.9.6 pnpm@12.9.1 bun@1.4.2
+                  echo "$RUNNER_TEMP/fnspm-managers/node_modules/.bin" >> "$GITHUB_PATH"
             - run: npm run format:check
             - run: npm run check
             - run: npm test
             - run: npm run test:package
-            - run: node scripts/test-managers.cjs npm
+            - run: node scripts/test-managers.cjs npm yarn pnpm bun deno
             - run: npm audit --audit-level=high

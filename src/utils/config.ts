@@ -6,6 +6,34 @@ import { isPackageManager } from './package-managers';
 import { CONFIG_FILE_NAMES, findProjectRoot, findConfigRoot } from './project';
 import type { Config, UserConfig } from './types';
 
+const settings: Record<string, readonly string[]> = {
+    packageManager: ['default', 'detection'],
+    symlink: ['enabled', 'addToGitIgnore', 'nosyncName', 'storagePath'],
+    debug: ['verbose'],
+};
+
+export interface ConfigDetails {
+    config: Config;
+    file: string | null;
+    origins: Record<string, string>;
+}
+
+function details(
+    config: Config,
+    user: UserConfig = {},
+    file: string | null = null,
+): ConfigDetails {
+    const origins: Record<string, string> = {};
+    for (const [section, keys] of Object.entries(settings)) {
+        const values = user[section as keyof UserConfig] as
+            Record<string, unknown> | undefined;
+        for (const key of keys)
+            origins[`${section}.${key}`] =
+                file && values?.[key] !== undefined ? file : 'built-in default';
+    }
+    return { config, file, origins };
+}
+
 export function mergeConfig(user: UserConfig = {}): Config {
     return {
         packageManager: {
@@ -64,14 +92,16 @@ export function validateConfig(config: Config): void {
     }
 }
 
-export async function loadConfig(root = findProjectRoot()): Promise<Config> {
+export async function loadConfigDetails(
+    root = findProjectRoot(),
+): Promise<ConfigDetails> {
     root = findConfigRoot(root);
     const files = CONFIG_FILE_NAMES.map((name) => path.join(root, name)).filter(
         (file) => fs.existsSync(file),
     );
     if (files.length > 1)
         throw new Error('Multiple FNSPM config files found; keep only one.');
-    if (!files.length) return mergeConfig();
+    if (!files.length) return details(mergeConfig());
     const file = files[0];
     try {
         // NodeNext preserves native import() in CommonJS, including .mjs and ESM .js configs.
@@ -79,34 +109,26 @@ export async function loadConfig(root = findProjectRoot()): Promise<Config> {
         const user: unknown = namespace.default;
         if (!user || typeof user !== 'object' || Array.isArray(user))
             throw new Error('Config must export an object');
-        const allowed = ['packageManager', 'symlink', 'debug'];
         for (const [key, value] of Object.entries(user)) {
-            if (!allowed.includes(key))
+            if (!Object.hasOwn(settings, key))
                 throw new Error(`Unknown config section: ${key}`);
             if (!value || typeof value !== 'object' || Array.isArray(value))
                 throw new Error(`${key} must be an object`);
-            const keys =
-                key === 'packageManager'
-                    ? ['default', 'detection']
-                    : key === 'symlink'
-                      ? [
-                            'enabled',
-                            'addToGitIgnore',
-                            'nosyncName',
-                            'storagePath',
-                        ]
-                      : ['verbose'];
             for (const setting of Object.keys(value)) {
-                if (!keys.includes(setting))
+                if (!settings[key].includes(setting))
                     throw new Error(`Unknown setting: ${key}.${setting}`);
             }
         }
         const config = mergeConfig(user as UserConfig);
         validateConfig(config);
-        return config;
+        return details(config, user as UserConfig, file);
     } catch (error) {
         throw new Error(
             `Could not load ${file}: ${error instanceof Error ? error.message : String(error)}`,
         );
     }
+}
+
+export async function loadConfig(root = findProjectRoot()): Promise<Config> {
+    return (await loadConfigDetails(root)).config;
 }
