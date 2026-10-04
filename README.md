@@ -1,6 +1,6 @@
 # FNSPM — Fast No Sync Package Manager
 
-Version 0.4.0 adds configuration inspection, guided recovery, complete operation
+Version 1.0.0 adds configuration inspection, guided recovery, complete operation
 locks, and a fix for Bun workspace installs through Windows path aliases.
 
 FNSPM runs your existing package manager and optionally keeps `node_modules` in a
