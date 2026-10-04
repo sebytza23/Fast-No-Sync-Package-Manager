@@ -1,0 +1,13 @@
+{
+    "name": "fnspm-documentation",
+    "private": true,
+    "scripts": {
+        "build": "node build.cjs",
+        "check": "node check.cjs",
+        "serve": "node serve.cjs",
+        "deploy": "npm run build && npm run check && node deploy.cjs"
+    },
+    "dependencies": {
+        "markdown-it": "15.0.2"
+    }
+}

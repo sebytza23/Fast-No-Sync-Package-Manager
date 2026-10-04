@@ -3,6 +3,10 @@
 Version 1.0.0 adds configuration inspection, guided recovery, complete operation
 locks, and a fix for Bun workspace installs through Windows path aliases.
 
+**[Read the documentation](https://sebytza23.github.io/Fast-No-Sync-Package-Manager/)**
+for setup guides, project and workspace configuration, the CLI reference,
+troubleshooting, and release notes.
+
 FNSPM runs your existing package manager and optionally keeps `node_modules` in a
 separate local directory connected by a symlink. It supports npm, Yarn, pnpm,
 Bun, and Deno command forwarding. Node.js 22 or newer is required.
