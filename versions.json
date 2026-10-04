@@ -1,0 +1,134 @@
+[
+  {
+    "version": "1.0.1",
+    "prefix": "",
+    "pages": [
+      {
+        "slug": "",
+        "title": "Overview"
+      },
+      {
+        "slug": "getting-started",
+        "title": "Getting started"
+      },
+      {
+        "slug": "configuration",
+        "title": "Configuration"
+      },
+      {
+        "slug": "workspaces",
+        "title": "Projects & workspaces"
+      },
+      {
+        "slug": "storage",
+        "title": "Dependency storage"
+      },
+      {
+        "slug": "package-managers",
+        "title": "Package managers"
+      },
+      {
+        "slug": "cli",
+        "title": "CLI reference"
+      },
+      {
+        "slug": "troubleshooting",
+        "title": "Troubleshooting"
+      },
+      {
+        "slug": "upgrading",
+        "title": "Upgrading to v1"
+      },
+      {
+        "slug": "api",
+        "title": "JavaScript & types"
+      },
+      {
+        "slug": "versions",
+        "title": "Documentation versions"
+      },
+      {
+        "slug": "changelog",
+        "title": "Changelog"
+      },
+      {
+        "slug": "development",
+        "title": "Development"
+      }
+    ],
+    "sourceRef": "6e314c415176816c78b42fff2dab3c26cc3f241b",
+    "archived": false
+  },
+  {
+    "version": "1.0.0",
+    "prefix": "versions/1.0.0/",
+    "pages": [
+      {
+        "slug": "",
+        "title": "Overview"
+      },
+      {
+        "slug": "getting-started",
+        "title": "Getting started"
+      },
+      {
+        "slug": "configuration",
+        "title": "Configuration"
+      },
+      {
+        "slug": "workspaces",
+        "title": "Projects & workspaces"
+      },
+      {
+        "slug": "storage",
+        "title": "Dependency storage"
+      },
+      {
+        "slug": "package-managers",
+        "title": "Package managers"
+      },
+      {
+        "slug": "cli",
+        "title": "CLI reference"
+      },
+      {
+        "slug": "troubleshooting",
+        "title": "Troubleshooting"
+      },
+      {
+        "slug": "upgrading",
+        "title": "Upgrading to v1"
+      },
+      {
+        "slug": "api",
+        "title": "JavaScript & types"
+      },
+      {
+        "slug": "changelog",
+        "title": "Changelog"
+      },
+      {
+        "slug": "development",
+        "title": "Development"
+      }
+    ],
+    "sourceRef": "91a68d3c673fd9224e5fd06c4811e69f40b7a064",
+    "archived": true
+  },
+  {
+    "version": "0.3.0",
+    "prefix": "versions/0.3.0/",
+    "pages": [
+      {
+        "slug": "",
+        "title": "0.3 reference"
+      },
+      {
+        "slug": "changelog",
+        "title": "Changelog"
+      }
+    ],
+    "sourceRef": "v0.3.0",
+    "archived": true
+  }
+]
