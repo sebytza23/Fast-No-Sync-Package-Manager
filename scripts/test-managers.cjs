@@ -330,6 +330,23 @@ async function main() {
                     ['-e', "if(require('fnspm-fixture')!==42)process.exit(1)"],
                     section,
                 );
+                command(
+                    process.execPath,
+                    [
+                        cli,
+                        '--pm',
+                        manager,
+                        'install',
+                        '--force',
+                        '--frozen-lockfile',
+                    ],
+                    workspace,
+                );
+                command(
+                    process.execPath,
+                    [cli, 'doctor', '--pm', manager],
+                    section,
+                );
             }
             command(process.execPath, [cli, 'restore'], workspace);
             console.log(
