@@ -108,7 +108,10 @@ function probeWindowsBunPaths(archive) {
                 private: true,
                 version: '1.0.0',
                 workspaces: ['packages/*'],
-                dependencies: { 'fnspm-fixture': 'file:../fixture.tgz' },
+                dependencies: {
+                    'fnspm-fixture': 'file:../fixture.tgz',
+                    'fnspm-workspace-web': 'workspace:*',
+                },
             }),
         );
         fs.writeFileSync(
