@@ -1,5 +1,19 @@
 (() => {
     document.documentElement.classList.remove('no-js');
+    const versionPicker = document.querySelector('.version-picker');
+    document.addEventListener('click', (event) => {
+        if (!versionPicker.contains(event.target)) versionPicker.open = false;
+    });
+    document.addEventListener('keydown', (event) => {
+        if (
+            event.key === 'Escape' &&
+            versionPicker.open &&
+            !document.querySelector('#documentation-search').open
+        ) {
+            versionPicker.open = false;
+            versionPicker.querySelector('summary').focus();
+        }
+    });
     const menu = document.querySelector('.menu-button');
     const sidebar = document.querySelector('.sidebar');
     const closeMenu = () => {
@@ -68,7 +82,9 @@
     const loadIndex = () =>
         indexPromise ||
         (indexPromise = fetch(
-            document.body.dataset.base + 'assets/search-index.json',
+            document.body.dataset.base +
+                'assets/search-index.json?v=' +
+                encodeURIComponent(document.body.dataset.revision),
         )
             .then((response) => {
                 if (!response.ok)
@@ -98,6 +114,7 @@
                             'Configuration',
                             'CLI reference',
                             'Changelog',
+                            index[0].title,
                         ].includes(entry.title),
                     )
                     .filter(
@@ -166,6 +183,7 @@
     };
     const openSearch = () => {
         if (dialog.open) return;
+        versionPicker.open = false;
         opener = document.activeElement;
         closeMenu();
         dialog.showModal();
@@ -210,6 +228,11 @@
         }
     });
     dialog.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            dialog.close();
+            return;
+        }
         if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
         const links = [...results.querySelectorAll('a')];
         if (!links.length) return;

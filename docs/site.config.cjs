@@ -84,6 +84,14 @@ module.exports = {
                 'The public main function, TypeScript types, and the v1 compatibility contract.',
         },
         {
+            slug: 'versions',
+            file: 'versions.md',
+            title: 'Documentation versions',
+            group: 'Releases',
+            description:
+                'Choose documentation for the release you use, or return to the current guides.',
+        },
+        {
             slug: 'changelog',
             file: null,
             title: 'Changelog',

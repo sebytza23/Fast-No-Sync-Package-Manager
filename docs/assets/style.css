@@ -83,11 +83,66 @@ html {
     align-items: center;
     gap: 26px;
 }
-.version-link {
+.version-picker {
+    position: relative;
+    flex-shrink: 0;
+}
+.version-picker summary {
+    cursor: pointer;
     text-decoration: none;
     font-size: 13px;
     color: var(--accent);
     font-weight: 600;
+}
+.version-options {
+    position: absolute;
+    top: calc(100% + 20px);
+    right: 0;
+    width: 258px;
+    padding: 8px;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+}
+.version-options a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 18px;
+    padding: 12px;
+    text-decoration: none;
+    font-size: 13px;
+}
+.version-options a:hover,
+.version-options a[aria-current] {
+    background: var(--surface);
+    color: var(--accent);
+}
+.version-options small {
+    font-size: 11px;
+    color: var(--muted);
+}
+.version-options .all-versions {
+    border-top: 1px solid var(--rule);
+    margin-top: 6px;
+}
+.archive-banner {
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    background: var(--surface);
+    margin-bottom: 32px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.archive-banner p {
+    margin: 0;
+}
+.archive-banner strong,
+.archive-banner span {
+    display: block;
+}
+.archive-banner span {
+    color: var(--muted);
+    margin-top: 4px;
 }
 .search-button {
     display: flex;
@@ -622,6 +677,12 @@ td code {
     .header-actions {
         margin-left: auto;
         gap: 16px;
+    }
+    .version-options {
+        position: fixed;
+        top: var(--header);
+        right: 18px;
+        width: min(280px, calc(100vw - 36px));
     }
     .search-button {
         width: auto;

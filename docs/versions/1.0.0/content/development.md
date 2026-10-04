@@ -31,6 +31,8 @@ Cloud-provider exclusions are not covered by automated tests.
 
 ## Build and preview the documentation
 
+The documentation site was added after the v1.0.0 release tag. The CLI checkout above uses that release; for documentation tooling, use the current documentation checkout and its stored release snapshots.
+
 The documentation has its own private package and lockfile. Its renderer is a build dependency; the published site contains static HTML, CSS, and browser JavaScript.
 
 ```sh
@@ -50,21 +52,7 @@ Use ordinary Markdown, fenced code blocks, and links to other source filenames. 
 
 The build generates a search index from the page content. Search requires no external service or account. Full pages and navigation remain readable without JavaScript.
 
-The current changelog page is generated directly from the root `CHANGELOG.md`. Update the release notes there rather than maintaining a second changelog for the site. The current version and exact-release installation examples come from the CLI's root package manifest. Use the version placeholder in Markdown examples instead of fixing the current version manually.
-
-## Preserve documentation for a release
-
-Before changing the CLI version for the next release, save the current published guides:
-
-```sh
-npm run snapshot --prefix docs
-```
-
-This writes the guide sources, changelog and edition metadata into `docs/versions/<version>/`. It refuses to overwrite an existing snapshot. Commit that snapshot, then prepare the next CLI version and update the current documentation.
-
-The builder discovers archived editions automatically and adds them to the version menu and [Documentation versions](versions.md). Each archive gets its own routes, search index, pinned installation examples and an archive banner. The current edition stays at the site's root URL. Historical sources are stored in the repository, so builds do not need to fetch old branches or tags.
-
-The 1.0.0 snapshot was taken from the original documentation commit; the 0.3.0 snapshot uses that release's README and changelog. Earlier releases without verified archived sources are not listed as complete documentation editions.
+The changelog page is generated directly from the root `CHANGELOG.md`. Update the release notes there rather than maintaining a second changelog for the site. The displayed version comes from the CLI's root package manifest.
 
 ## Checks before publication
 

@@ -18,7 +18,7 @@ fnspm doctor
 Install v1 and inspect the same project:
 
 ```sh
-npm install -g fnspm@{{version}}
+npm install -g fnspm@1.0.0
 fnspm config --show
 fnspm doctor
 ```
@@ -34,7 +34,7 @@ Older projects may already have `node_modules` linked to the configured project-
 FNSPM can adopt this layout when the link matches the configured local name, the target is a regular directory, and the layout passes validation:
 
 ```sh
-npm install -g fnspm@{{version}}
+npm install -g fnspm@1.0.0
 fnspm migrate --dry-run
 fnspm migrate
 fnspm doctor
