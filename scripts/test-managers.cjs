@@ -40,7 +40,9 @@ function configure(root, manager, pnp = false) {
     if (manager === 'yarn')
         fs.writeFileSync(
             path.join(root, '.yarnrc.yml'),
-            `nodeLinker: ${pnp ? 'pnp' : 'node-modules'}\nenableGlobalCache: false\nenableTelemetry: false\n`,
+            // Fresh fixtures need to create their first lockfile in CI; later
+            // installs still explicitly request --immutable.
+            `nodeLinker: ${pnp ? 'pnp' : 'node-modules'}\nenableGlobalCache: false\nenableTelemetry: false\nenableImmutableInstalls: false\n`,
         );
     if (manager === 'deno') {
         fs.writeFileSync(
@@ -277,6 +279,56 @@ async function main() {
                     process.execPath,
                     [cli, 'doctor', '--pm', manager],
                     workspace,
+                );
+            }
+            if (manager === 'npm') {
+                command(
+                    process.execPath,
+                    [
+                        cli,
+                        '--pm',
+                        manager,
+                        '--silent',
+                        '--workspace',
+                        'fnspm-workspace-web',
+                        'ci',
+                    ],
+                    workspace,
+                );
+                command(
+                    process.execPath,
+                    [cli, 'doctor', '--pm', manager],
+                    workspace,
+                );
+                command(
+                    process.execPath,
+                    ['-e', "if(require('fnspm-fixture')!==42)process.exit(1)"],
+                    section,
+                );
+            }
+            if (manager === 'pnpm') {
+                command(
+                    process.execPath,
+                    [
+                        cli,
+                        '--pm',
+                        manager,
+                        '--filter',
+                        'fnspm-workspace-web',
+                        'install',
+                        '--frozen-lockfile',
+                    ],
+                    workspace,
+                );
+                command(
+                    process.execPath,
+                    [cli, 'doctor', '--pm', manager],
+                    workspace,
+                );
+                command(
+                    process.execPath,
+                    ['-e', "if(require('fnspm-fixture')!==42)process.exit(1)"],
+                    section,
                 );
             }
             command(process.execPath, [cli, 'restore'], workspace);

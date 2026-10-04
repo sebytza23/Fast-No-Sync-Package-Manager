@@ -4,6 +4,8 @@
 
 - Hold operation locks across restoration, the native command, and conversion;
   coordinate workspace roots and sections, including untracked shared storage.
+- Recognize common native options before dependency commands, including npm
+  workspace selections, pnpm filters/recursive installs, and Yarn workspace adds.
 - Add `config --show` with per-setting origins, manager selection reasons,
   project/dependency roots, and optional machine-readable JSON.
 - Add `doctor --fix --dry-run` and explicit `doctor --fix` for identity-checked

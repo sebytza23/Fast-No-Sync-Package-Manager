@@ -117,7 +117,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
         });
     }
     const manager = parsed.manager ?? detectPackageManager(root, config);
-    const dependencyCommand = isDependencyCommand(parsed.args);
+    const dependencyCommand = isDependencyCommand(parsed.args, manager);
     const optimize = config.symlink.enabled && shouldAutoMigrate(parsed.args);
     const execute = async () => {
         // Restore shared storage already managed by FNSPM before native workspace
