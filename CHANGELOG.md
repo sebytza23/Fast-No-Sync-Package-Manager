@@ -13,6 +13,16 @@
 - Generate contextual Bash, Zsh, Fish and PowerShell completions with
   `--completion`, without loading project configuration or installing files.
 - Preserve the complete 1.0.1 documentation before updating current guides.
+- Add automatic external storage with `storagePath: 'auto'` and
+  `initialize --external`, using separate deterministic destinations per project.
+- Record verified storage in a local inventory; add `--storage list` with optional
+  JSON/size output and `--storage register` for existing tracked installations.
+  Unavailable projects remain recorded and are never treated as unused storage.
+- Add `--relocate` with preview, filesystem/link checks and a persistent recovery
+  journal. Retain the chosen destination without overwriting JavaScript config;
+  support explicit recovery, doctor repairs, restoration and preference reset.
+- Verify automatic external storage and retained relocation destinations against
+  all five native managers and the installed npm package artifact.
 
 ## 1.0.1 — 2026-10-04
 

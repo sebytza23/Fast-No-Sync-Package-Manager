@@ -1,5 +1,13 @@
 # Troubleshooting
 
+## Interrupted relocation or unavailable storage
+
+Inspect `fnspm --storage list --json` and `fnspm --info --json`. An unavailable project may be on a disconnected disk; do not treat this as permission to remove storage.
+
+If `.fnspm-relocate.json` is present, preview `fnspm --relocate --recover --dry-run`, then apply `fnspm --relocate --recover` or use `doctor --fix`. Recovery checks both destinations and the recorded identity. It refuses changed directories, foreign source links and conflicting metadata. Explicit recovery remains available with a broken JavaScript config.
+
+If an operation lock remains after a forced stop, inspect its process information and confirm that process has stopped before removing only the lock file. Never remove the relocation journal to bypass an ownership error. Read the [relocation guide](storage.md#relocating-managed-storage) for the full workflow.
+
 ## Start with inspection
 
 Run these commands from the directory where the problem occurs:

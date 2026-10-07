@@ -6,12 +6,18 @@ const assert = require('node:assert/strict');
 const spawn = require('cross-spawn');
 const root = path.resolve(__dirname, '..');
 const manifest = require('../package.json');
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'fnspm-package-'));
+const scratch = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'fnspm-package-')),
+);
 function command(executable, args, cwd = scratch) {
     const result = spawn.sync(executable, args, {
         cwd,
         encoding: 'utf8',
         timeout: 120000,
+        env: {
+            ...process.env,
+            FNSPM_DATA_DIR: path.join(scratch, 'fnspm-data'),
+        },
     });
     if (result.error || result.status !== 0)
         throw new Error(
@@ -127,8 +133,31 @@ void [manager, config, valid, invalid];\n`,
         '-p',
         path.join(scratch, 'tsconfig.json'),
     ]);
+    const managed = path.join(scratch, 'managed-project');
+    fs.mkdirSync(path.join(managed, 'node_modules'), { recursive: true });
+    fs.writeFileSync(path.join(managed, 'package.json'), '{}');
+    fs.writeFileSync(path.join(managed, 'node_modules', 'sentinel'), '42');
+    command(installedBin, ['initialize', '--external'], managed);
+    command(installedBin, ['migrate'], managed);
+    const installedInfo = JSON.parse(
+        command(installedBin, ['--info', '--json'], managed),
+    );
+    assert.equal(installedInfo.dependencies.state, 'valid');
+    const relocated = path.join(scratch, 'relocated-project-storage');
+    command(installedBin, ['--relocate', relocated], managed);
+    const inventory = JSON.parse(
+        command(installedBin, ['--storage', 'list', '--json'], managed),
+    );
+    assert.equal(inventory.entries[0].record.target, relocated);
+    assert.equal(inventory.entries[0].status, 'managed');
+    command(installedBin, ['restore'], managed);
+    assert.equal(
+        fs.readFileSync(path.join(managed, 'node_modules', 'sentinel'), 'utf8'),
+        '42',
+    );
+    assert.ok(fs.lstatSync(path.join(managed, 'node_modules')).isDirectory());
     console.log(
-        `Package verified: ${manifest.name}@${manifest.version} — installed CLI and diagnostics, completions, side-effect-free import, complete TypeScript declarations.`,
+        `Package verified: ${manifest.name}@${manifest.version} — installed CLI, diagnostics, completions, automatic storage, inventory, relocation/restore, side-effect-free import, complete TypeScript declarations.`,
     );
 } finally {
     fs.rmSync(scratch, { recursive: true, force: true });

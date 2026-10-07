@@ -19,7 +19,36 @@ const scenarios = [
         words: ['fnspm', '--pm=bun', 'doctor', ''],
         includes: ['--json', '--size'],
     },
-    { words: ['fnspm', ''], includes: ['--info', '--why', 'doctor'] },
+    {
+        words: ['fnspm', ''],
+        includes: ['--info', '--why', '--storage', '--relocate', 'doctor'],
+    },
+    { words: ['fnspm', '--storage', ''], includes: ['list', 'register'] },
+    {
+        words: ['fnspm', '--storage', 'list', ''],
+        includes: ['--json', '--size'],
+    },
+    {
+        words: ['fnspm', '--storage', 'register', ''],
+        includes: ['--json'],
+        excludes: ['--size'],
+    },
+    {
+        words: ['fnspm', '--relocate', ''],
+        includes: [
+            '--external',
+            '--configured',
+            '--recover',
+            '--dry-run',
+            '--json',
+        ],
+    },
+    {
+        words: ['fnspm', '--relocate', '--external', ''],
+        includes: ['--json', '--dry-run'],
+        excludes: ['--configured', '--recover'],
+    },
+    { words: ['fnspm', 'initialize', ''], includes: ['--external'] },
     {
         words: ['fnspm', '--pm', 'bun', ''],
         includes: ['doctor', 'config'],

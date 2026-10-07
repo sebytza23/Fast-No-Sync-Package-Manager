@@ -101,6 +101,7 @@ Completions include FNSPM actions, valid manager/detection values and contextual
 ```sh
 fnspm initialize
 fnspm initialize --default
+fnspm initialize --external
 fnspm init-config --pm pnpm --detection default --no-symlink
 ```
 
@@ -199,6 +200,36 @@ Inspect or restore dependencies with recorded FNSPM ownership. The command uses 
 It refuses untracked links, replaced storage, conflicting dependency entries, or link layouts that cannot be restored safely. Only `--dry-run` is accepted as an additional argument.
 
 Restoration does not remove config or disable future automatic conversion.
+
+## Storage action flags
+
+`--storage` and `--relocate` are first-argument actions, preserving native `storage` and `relocate` command names and later native arguments.
+
+## --storage
+
+```sh
+fnspm --storage list
+fnspm --storage list --json --size
+fnspm --storage register
+fnspm --storage register --json
+```
+
+`list` inspects the local inventory without loading executable project configuration or running a manager. `--size` is optional and only scans verified managed storage. Unavailable projects retain their entries and are not considered unused. JSON includes `schemaVersion`, the registry path, and entries with `record`, `file`, `status`, optional message, `size` and warnings.
+
+`register` records the current identity-verified migration without moving dependency files. It is useful for pre-existing installations. Read the [storage inventory guide](storage.md#storage-inventory) for status meanings and limitations.
+
+## --relocate
+
+```sh
+fnspm --relocate --external --dry-run
+fnspm --relocate /absolute/storage/project --json
+fnspm --relocate --configured
+fnspm --relocate --recover --dry-run --json
+```
+
+Choose exactly one mode: an absolute destination, `--external` for automatic storage, `--configured` for the JavaScript-configured destination, or `--recover` for a pending journal. `--dry-run` inspects without writes. JSON reports the operation, root, dry-run status, success/error status and message.
+
+Relocation preserves directory identity, verifies the filesystem and link layout, and persists its destination without changing executable config. Recovery refuses ambiguous or substituted paths and can run without evaluating a broken config. See [Relocating managed storage](storage.md#relocating-managed-storage).
 
 ## Reserved command names
 

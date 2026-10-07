@@ -54,8 +54,12 @@ function buildEdition(edition) {
     md.renderer.rules.link_open = (tokens, idx, opts, env, self) => {
         const token = tokens[idx];
         const href = token.attrGet('href');
-        if (edition.archived && href === 'versions.md') {
-            token.attrSet('href', projectBase + 'versions/');
+        const markdownLink = href?.match(/^([^:/?#]+\.md)([?#].*)?$/);
+        if (edition.archived && markdownLink?.[1] === 'versions.md') {
+            token.attrSet(
+                'href',
+                projectBase + 'versions/' + (markdownLink[2] || ''),
+            );
             return fallbackLink(tokens, idx, opts, env, self);
         }
         if (href === 'LICENSE')
@@ -66,14 +70,14 @@ function buildEdition(edition) {
                     encodeURIComponent(sourceRef) +
                     '/LICENSE',
             );
-        if (href && href.endsWith('.md')) {
+        if (markdownLink) {
             const target = pages.find(
                 (page) =>
-                    page.file === href ||
-                    (!page.file && page.slug + '.md' === href),
+                    page.file === markdownLink[1] ||
+                    (!page.file && page.slug + '.md' === markdownLink[1]),
             );
             if (!target) throw new Error('Unknown documentation link: ' + href);
-            token.attrSet('href', url(target.slug));
+            token.attrSet('href', url(target.slug) + (markdownLink[2] || ''));
         }
         return fallbackLink(tokens, idx, opts, env, self);
     };

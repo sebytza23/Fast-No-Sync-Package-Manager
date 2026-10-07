@@ -29,6 +29,8 @@ import {
 import { doctor } from './src/utils/doctor';
 import { configurationFailure } from './src/utils/diagnostics';
 import { completionScript } from './src/utils/completion';
+import { storageAction, relocationAction } from './src/utils/storage-cli';
+import { storageConfigDetails } from './src/utils/storage-path';
 
 export async function main(args = process.argv.slice(2)): Promise<number> {
     if (!args.length || ['help', '--help', '-h'].includes(args[0])) {
@@ -57,6 +59,8 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
     } else if (args[0] === '--why')
         args = ['config', '--show', ...args.slice(1)];
     const cwd = fs.realpathSync(process.cwd());
+    if (args[0] === '--storage') return storageAction(args.slice(1), cwd);
+    if (args[0] === '--relocate') return relocationAction(args.slice(1), cwd);
     if (['initialize', 'init-config'].includes(args[0])) {
         await initialize(args.slice(1), cwd);
         return 0;
@@ -147,7 +151,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
                 'Usage: fnspm config --show [--json] [--pm <manager>]',
             );
         showConfig(
-            configDetails,
+            storageConfigDetails(dependencyRoot, configDetails),
             cwd,
             root,
             dependencyRoot,

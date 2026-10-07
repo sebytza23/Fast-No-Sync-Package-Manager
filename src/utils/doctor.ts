@@ -18,6 +18,11 @@ import {
     type DiagnosticContext,
 } from './diagnostics';
 import type { Config, PackageManagerType } from './types';
+import {
+    effectiveStorage,
+    storageConfigDetails,
+    RELOCATION_FILE,
+} from './storage-path';
 
 export function doctor(
     root: string,
@@ -32,6 +37,8 @@ export function doctor(
         context?: DiagnosticContext;
     } = {},
 ): number {
+    const baseConfig = config;
+    config = effectiveStorage(root, baseConfig);
     const report = diagnosticReport(
         options.context ?? {
             cwd: root,
@@ -99,6 +106,12 @@ export function doctor(
             );
         }
     }
+    config = effectiveStorage(root, baseConfig);
+    if (options.context?.configuration)
+        report.configuration = storageConfigDetails(
+            root,
+            options.context.configuration,
+        );
     try {
         const selection = describePackageManager(managerRoot, config, override);
         const manager = selection.name;
@@ -225,6 +238,19 @@ export function doctor(
                 'Inspect the recorded state and dependency paths before recovery; FNSPM will not overwrite or delete conflicting directories.',
             );
         }
+    }
+    if (lstat(path.join(root, RELOCATION_FILE))) {
+        if (report.dependencies.state !== 'invalid')
+            report.dependencies.state = 'recovery-needed';
+        if (
+            !report.issues.some(
+                (issue) => issue.code === 'state.recovery-needed',
+            )
+        )
+            problem(
+                'Storage relocation is pending; run fnspm --relocate --recover.',
+                'state.recovery-needed',
+            );
     }
     report.dependencies.lockPresent = Boolean(
         lstat(path.join(root, LOCK_FILE)),
