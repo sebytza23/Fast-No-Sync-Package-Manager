@@ -2,6 +2,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Config } from './types';
 import { LOCK_FILE, withOperationLock } from './operation-lock';
+import {
+    automaticStorage,
+    existingAncestor,
+    ensureStorageParent,
+    effectiveStorage,
+    readMetadata,
+    writeMetadata,
+    writeStoragePreference,
+    storagePreference,
+    STORAGE_FILE,
+    RELOCATION_FILE,
+} from './storage-path';
+import { recordStorage } from './storage-registry';
 export { LOCK_FILE } from './operation-lock';
 
 export const STATE_FILE = '.fnspm-state.json';
@@ -32,12 +45,22 @@ const inside = (parent: string, child: string) => {
     );
 };
 
-export function dependencyTarget(root: string, config: Config): string {
+export function dependencyTarget(
+    root: string,
+    config: Config,
+    ignorePreference = false,
+): string {
     root = fs.realpathSync(root);
+    if (!ignorePreference) config = effectiveStorage(root, config);
     const requested =
-        config.symlink.storagePath ??
-        path.join(root, config.symlink.nosyncName);
-    const parent = fs.realpathSync(path.dirname(requested));
+        config.symlink.storagePath === 'auto'
+            ? automaticStorage(root)
+            : (config.symlink.storagePath ??
+              path.join(root, config.symlink.nosyncName));
+    const parent =
+        config.symlink.storagePath === 'auto'
+            ? path.dirname(requested)
+            : fs.realpathSync(path.dirname(requested));
     const target = path.join(parent, path.basename(requested));
     const source = path.join(root, 'node_modules');
     if (
@@ -170,6 +193,8 @@ export function gitIgnoreRules(root: string, config: Config): string[] {
             : []),
         `/${STATE_FILE}`,
         `/${LOCK_FILE}`,
+        `/${STORAGE_FILE}`,
+        `/${RELOCATION_FILE}`,
     ];
 }
 
@@ -202,6 +227,8 @@ export function repairDependencies(
     dryRun = false,
 ): string | undefined {
     root = fs.realpathSync(root);
+    if (lstat(path.join(root, RELOCATION_FILE)))
+        return recoverRelocation(root, dryRun);
     const state = readState(root);
     if (!state) return undefined;
     const source = path.join(root, 'node_modules');
@@ -231,7 +258,7 @@ export function repairDependencies(
     return undefined;
 }
 
-export function migrateDependencies(
+function performMigration(
     root: string,
     config: Config,
     dryRun = false,
@@ -286,7 +313,10 @@ export function migrateDependencies(
             throw new Error(
                 `Destination already exists: ${target}. No files were overwritten.`,
             );
-        if (fs.statSync(path.dirname(target)).dev !== stats.dev)
+        if (
+            fs.statSync(existingAncestor(path.dirname(target))).dev !==
+            stats.dev
+        )
             throw new Error(
                 'Dependency storage must be on the same filesystem so migration can be rolled back safely.',
             );
@@ -330,6 +360,7 @@ export function migrateDependencies(
     if (dryRun) return `[dry-run] ${message}`;
     return withLock(root, () => {
         const current = inspect();
+        if (config.symlink.storagePath === 'auto') ensureStorageParent(target);
         if (config.symlink.addToGitIgnore) addToGitIgnore(root, config);
         if (current.recovery) {
             createLink(source, target);
@@ -373,7 +404,7 @@ export function migrateDependencies(
     });
 }
 
-export function restoreDependencies(root: string, dryRun = false): string {
+function performRestoration(root: string, dryRun = false): string {
     root = fs.realpathSync(root);
     const source = path.join(root, 'node_modules');
     const inspect = () => {
@@ -425,5 +456,306 @@ export function restoreDependencies(root: string, dryRun = false): string {
         }
         fs.unlinkSync(path.join(root, STATE_FILE));
         return message;
+    });
+}
+
+export function migrateDependencies(
+    root: string,
+    config: Config,
+    dryRun = false,
+): string {
+    root = fs.realpathSync(root);
+    if (dryRun) {
+        if (lstat(path.join(root, RELOCATION_FILE)))
+            throw new Error(
+                'Complete pending relocation with fnspm doctor --fix before migrating.',
+            );
+        return performMigration(root, effectiveStorage(root, config), true);
+    }
+    return withLock(root, () => {
+        if (lstat(path.join(root, RELOCATION_FILE))) recoverRelocation(root);
+        const result = performMigration(root, effectiveStorage(root, config));
+        const state = readState(root);
+        if (state && ownedTarget(state)) recordStorage(root, state);
+        return result;
+    });
+}
+
+export function restoreDependencies(root: string, dryRun = false): string {
+    root = fs.realpathSync(root);
+    if (lstat(path.join(root, RELOCATION_FILE))) {
+        if (dryRun)
+            return (
+                recoverRelocation(root, true) +
+                '\n[dry-run] Restore dependencies after completing relocation.'
+            );
+        return withLock(root, () => {
+            recoverRelocation(root);
+            return performRestoration(root);
+        });
+    }
+    return performRestoration(root, dryRun);
+}
+
+interface RelocationJournal {
+    version: 1;
+    root: string;
+    from: string;
+    to: string;
+    device: string;
+    inode: string;
+    storagePath: string | null;
+}
+
+function relocationPlan(root: string) {
+    const journal = readMetadata(
+        path.join(root, RELOCATION_FILE),
+    ) as RelocationJournal;
+    const state = readState(root);
+    if (
+        !journal ||
+        journal.version !== 1 ||
+        journal.root !== root ||
+        !state ||
+        state.device !== journal.device ||
+        state.inode !== journal.inode ||
+        ![journal.from, journal.to].includes(state.target) ||
+        typeof journal.from !== 'string' ||
+        typeof journal.to !== 'string' ||
+        !path.isAbsolute(journal.from) ||
+        !path.isAbsolute(journal.to) ||
+        journal.from === journal.to ||
+        inside(journal.from, journal.to) ||
+        inside(journal.to, journal.from) ||
+        !/^\d+$/.test(journal.device) ||
+        !/^\d+$/.test(journal.inode) ||
+        (journal.storagePath !== null &&
+            journal.storagePath !== 'auto' &&
+            (typeof journal.storagePath !== 'string' ||
+                !path.isAbsolute(journal.storagePath)))
+    )
+        throw new Error(
+            'Invalid relocation journal; inspect it before recovery.',
+        );
+    for (const target of [journal.from, journal.to]) {
+        if (
+            inside(target, root) ||
+            inside(path.join(root, 'node_modules'), target) ||
+            (inside(root, target) &&
+                (path.dirname(target) !== root ||
+                    [
+                        '.git',
+                        STATE_FILE,
+                        LOCK_FILE,
+                        STORAGE_FILE,
+                        RELOCATION_FILE,
+                    ].includes(path.basename(target))))
+        )
+            throw new Error('Unsafe relocation path; refusing recovery.');
+        if (fs.realpathSync(path.dirname(target)) !== path.dirname(target))
+            throw new Error('Relocation parent changed; refusing recovery.');
+    }
+    const old = lstat(journal.from);
+    const next = lstat(journal.to);
+    if (Boolean(old) === Boolean(next))
+        throw new Error(
+            'Relocation needs exactly one owned storage directory; inspect both paths.',
+        );
+    const current = old ? journal.from : journal.to;
+    if (fs.statSync(path.dirname(journal.to)).dev.toString() !== state.device)
+        throw new Error(
+            'Relocation destination filesystem changed; refusing recovery.',
+        );
+    const owned = { ...state, target: current };
+    if (!ownedTarget(owned))
+        throw new Error(
+            'Relocation storage identity changed; refusing recovery.',
+        );
+    const source = path.join(root, 'node_modules');
+    const link = lstat(source);
+    if (
+        link &&
+        (!link.isSymbolicLink() ||
+            ![journal.from, journal.to].includes(linkTarget(source)))
+    )
+        throw new Error('node_modules changed; refusing relocation recovery.');
+    storagePreference(root); // A substituted preference file must not be overwritten.
+    if (old) checkRelativeLinks(journal.from, journal.to, journal.from, false);
+    return { journal, state, source, current, link };
+}
+
+/** Roll forward a recorded move after any process interruption, under the project lock. */
+export function recoverRelocation(root: string, dryRun = false): string {
+    root = fs.realpathSync(root);
+    const plan = relocationPlan(root);
+    const message = `Complete storage relocation: ${plan.journal.from} -> ${plan.journal.to}`;
+    if (dryRun) return '[dry-run] ' + message;
+    return withLock(root, () => {
+        const { journal, state, source, current, link } = relocationPlan(root);
+        if (link && linkTarget(source) !== journal.to) fs.unlinkSync(source);
+        if (current === journal.from) fs.renameSync(journal.from, journal.to);
+        if (!lstat(source)) createLink(source, journal.to);
+        const next: MigrationState = { ...state, target: journal.to };
+        if (!ownedTarget(next) || linkTarget(source) !== next.target)
+            throw new Error(
+                'Relocation verification failed; journal retained for recovery.',
+            );
+        writeStoragePreference(root, journal.storagePath);
+        writeMetadata(path.join(root, STATE_FILE), next);
+        recordStorage(root, next);
+        fs.unlinkSync(path.join(root, RELOCATION_FILE));
+        return message;
+    });
+}
+
+export function relocateDependencies(
+    root: string,
+    config: Config,
+    destination: string | undefined,
+    dryRun = false,
+): string {
+    root = fs.realpathSync(root);
+    if (
+        destination !== undefined &&
+        destination !== 'auto' &&
+        !path.isAbsolute(destination)
+    )
+        throw new Error(
+            'Relocation destination must be an absolute path, or use --external.',
+        );
+    if (destination === undefined && !readState(root)) {
+        const inspectReset = () => {
+            if (readState(root) || lstat(path.join(root, RELOCATION_FILE)))
+                throw new Error(
+                    'Storage changed while resetting the preference.',
+                );
+            storagePreference(root);
+            const source = lstat(path.join(root, 'node_modules'));
+            if (source && (!source.isDirectory() || source.isSymbolicLink()))
+                throw new Error(
+                    'Restore or inspect node_modules before resetting the storage preference.',
+                );
+        };
+        inspectReset();
+        const message =
+            'Clear relocation preference; the next migration uses project configuration.';
+        if (dryRun) return '[dry-run] ' + message;
+        return withLock(root, () => {
+            inspectReset();
+            writeStoragePreference(root, null);
+            return message;
+        });
+    }
+    const inspect = () => {
+        if (lstat(path.join(root, RELOCATION_FILE)))
+            throw new Error(
+                'Relocation is pending; run fnspm --relocate --recover or fnspm doctor --fix.',
+            );
+        const state = readState(root);
+        if (!state || !ownedTarget(state))
+            throw new Error(
+                'Relocation requires identity-verified FNSPM storage.',
+            );
+        if (
+            fs.realpathSync(path.dirname(state.target)) !==
+            path.dirname(state.target)
+        )
+            throw new Error(
+                'Recorded storage parent changed; inspect it before relocating.',
+            );
+        const source = path.join(root, 'node_modules');
+        if (
+            !lstat(source)?.isSymbolicLink() ||
+            linkTarget(source) !== state.target
+        )
+            throw new Error(
+                'Relocation requires the recorded node_modules link; recover it first.',
+            );
+        storagePreference(root);
+        const settings = {
+            ...config,
+            symlink: {
+                ...config.symlink,
+                ...(destination === undefined
+                    ? {}
+                    : { storagePath: destination }),
+            },
+        };
+        const target = dependencyTarget(root, settings, true);
+        if (target !== state.target) {
+            if (inside(state.target, target) || inside(target, state.target))
+                throw new Error('Storage destinations must not overlap.');
+            if (lstat(target))
+                throw new Error(
+                    'Relocation destination already exists; no files were overwritten.',
+                );
+            if (
+                fs
+                    .statSync(existingAncestor(path.dirname(target)))
+                    .dev.toString() !== state.device
+            )
+                throw new Error(
+                    'Storage relocation must stay on the same filesystem.',
+                );
+            checkRelativeLinks(state.target, target, state.target, false);
+        }
+        return {
+            state,
+            target,
+            automatic: settings.symlink.storagePath === 'auto',
+        };
+    };
+    const plan = inspect();
+    const message = `Relocate dependency storage: ${plan.state.target} -> ${plan.target}`;
+    if (dryRun) return '[dry-run] ' + message;
+    return withLock(root, () => {
+        const { state, target, automatic } = inspect();
+        if (automatic) ensureStorageParent(target);
+        if (target === state.target) {
+            writeStoragePreference(root, destination ?? null);
+            recordStorage(root, state);
+            return 'Storage already at destination; preference updated.';
+        }
+        writeMetadata(
+            path.join(root, RELOCATION_FILE),
+            {
+                version: 1,
+                root,
+                from: state.target,
+                to: target,
+                device: state.device,
+                inode: state.inode,
+                storagePath: destination ?? null,
+            } satisfies RelocationJournal,
+            true,
+        );
+        try {
+            recoverRelocation(root);
+        } catch (error) {
+            throw new Error(
+                'Storage relocation interrupted; data and journal retained. Run fnspm --relocate --recover. ' +
+                    String(error),
+                { cause: error },
+            );
+        }
+        return message;
+    });
+}
+
+export function registerStorage(root: string): string {
+    root = fs.realpathSync(root);
+    return withLock(root, () => {
+        if (lstat(path.join(root, RELOCATION_FILE)))
+            throw new Error(
+                'Complete pending relocation before registering storage.',
+            );
+        performRestoration(root, true);
+        const state = readState(root)!;
+        if (!ownedTarget(state))
+            throw new Error(
+                'Only current identity-verified storage can be registered.',
+            );
+        recordStorage(root, state, true);
+        return 'Registered dependency storage: ' + state.target;
     });
 }

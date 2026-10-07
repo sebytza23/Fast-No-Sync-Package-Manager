@@ -1,7 +1,9 @@
 # FNSPM — Fast No Sync Package Manager
 
-Version 1.0.0 adds configuration inspection, guided recovery, complete operation
-locks, and a fix for Bun workspace installs through Windows path aliases.
+Version 1.1.0 adds `--info`, `--why`, JSON diagnostics, optional dependency-size
+inspection, contextual shell completions, automatic external storage, a storage
+inventory and recoverable relocation. Existing configuration, migration
+and native command forwarding remain supported.
 
 **[Read the documentation](https://sebytza23.github.io/Fast-No-Sync-Package-Manager/)**
 for setup guides, project and workspace configuration, the CLI reference,
@@ -23,6 +25,12 @@ mechanism.
 npm install -g fnspm
 fnspm --help
 fnspm --version
+fnspm --info --json                 # health, runtime, manager and storage report
+fnspm --why                        # explain settings and manager selection
+fnspm --info --size                # optional logical dependency-size scan
+fnspm --completion zsh             # generate completions without changing profiles
+fnspm --storage list --json         # registered storage; no dependency-tree scan
+fnspm --relocate --external --dry-run # preview moving tracked storage
 
 fnspm install                       # auto-detect the project's manager
 fnspm --pm npm install lodash --save-dev
@@ -55,6 +63,7 @@ auto-detection, and project-local `node_modules.nosync` storage.
 ```sh
 fnspm initialize                    # interactive terminal wizard
 fnspm initialize --default          # noninteractive defaults
+fnspm initialize --external         # automatic external storage, unique per project
 fnspm initialize --pm pnpm --detection auto --no-symlink
 ```
 
@@ -76,6 +85,7 @@ const config = {
         addToGitIgnore: true,
         nosyncName: 'node_modules.nosync',
         // storagePath: '/absolute/path/outside/synced-folders/my-project-deps',
+        // storagePath: 'auto', // let FNSPM choose a dedicated external destination
     },
     debug: { verbose: false },
 };
@@ -85,17 +95,18 @@ module.exports = config; // use `export default config` in .mjs / ESM .js
 Config files execute as JavaScript, like a package manager's project scripts.
 Only load configurations from projects you trust.
 
-| Initialization option                         | Effect                                                            |
-| --------------------------------------------- | ----------------------------------------------------------------- |
-| `--default`, `-d`                             | Use defaults without prompting; other options still override them |
-| `--pm <manager>`                              | Set fallback manager                                              |
-| `--detection <mode>`                          | `auto`, `default`, or a manager name                              |
-| `--symlink`, `--no-symlink`                   | Enable or disable automatic migration                             |
-| `--sync-folder <name>`                        | Set a single project-local directory name                         |
-| `--storage-path <absolute-path>`              | Set a dedicated storage directory outside the project             |
-| `--no-sync-folder`                            | Alias for `--no-symlink`                                          |
-| `--add-to-gitignore`, `--no-add-to-gitignore` | Enable or disable generated ignore rules                          |
-| `--verbose`, `--no-verbose`                   | Enable or disable command diagnostics                             |
+| Initialization option                         | Effect                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------- |
+| `--default`, `-d`                             | Use defaults without prompting; other options still override them   |
+| `--pm <manager>`                              | Set fallback manager                                                |
+| `--detection <mode>`                          | `auto`, `default`, or a manager name                                |
+| `--symlink`, `--no-symlink`                   | Enable or disable automatic migration                               |
+| `--sync-folder <name>`                        | Set a single project-local directory name                           |
+| `--storage-path <path>`                       | Set an absolute destination, or `auto` for managed external storage |
+| `--external`                                  | Enable automatic external storage                                   |
+| `--no-sync-folder`                            | Alias for `--no-symlink`                                            |
+| `--add-to-gitignore`, `--no-add-to-gitignore` | Enable or disable generated ignore rules                            |
+| `--verbose`, `--no-verbose`                   | Enable or disable command diagnostics                               |
 
 Legacy boolean forms such as `--symlink true` and `--verbose false` also work.
 
@@ -200,6 +211,17 @@ configuration if future installations should remain in the native layout.
 
 ### Storage outside synced folders
 
+Use `fnspm initialize --external` for a new configuration, or set
+`symlink.storagePath: 'auto'` in an existing one. FNSPM chooses a distinct external
+destination per canonical project path. Filesystem and workspace-link checks still
+apply. `fnspm --storage list` shows registered storage without scanning dependency
+trees; `--size` requests a scan.
+
+For an existing managed layout, `fnspm --relocate --external --dry-run` previews a
+move and `fnspm --relocate --external` applies it. A journal supports recovery with
+`--relocate --recover`, and a local preference retains the destination without
+rewriting your config. See the [storage guide](https://sebytza23.github.io/Fast-No-Sync-Package-Manager/storage/).
+
 Set `storagePath` to an absolute, **dedicated and currently nonexistent** directory
 outside the project. Its parent must already exist on the same filesystem. Choose
 a different destination for every project. Dependencies containing relative links
@@ -248,7 +270,8 @@ guarantee about a provider's behavior.
 - Restore dependencies before moving/renaming a project or changing storage to
   another device. Absolute links pointing into the storage must be changed to
   relative links before restoration. Recorded ownership and absolute external paths are local to
-  the original project location.
+  the original project location. Clear a relocation preference with
+  `--relocate --configured` after restoration, before moving the project.
 
 ## Development and validation
 

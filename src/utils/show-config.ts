@@ -2,6 +2,7 @@ import path from 'node:path';
 import type { ConfigDetails } from './config';
 import { describePackageManager } from './detection';
 import type { PackageManagerType } from './types';
+import { automaticStorage } from './storage-path';
 
 export function showConfig(
     details: ConfigDetails,
@@ -23,8 +24,10 @@ export function showConfig(
             root,
         },
         dependencyStorage:
-            details.config.symlink.storagePath ??
-            path.join(dependencyRoot, details.config.symlink.nosyncName),
+            details.config.symlink.storagePath === 'auto'
+                ? automaticStorage(dependencyRoot)
+                : (details.config.symlink.storagePath ??
+                  path.join(dependencyRoot, details.config.symlink.nosyncName)),
     };
     if (json) {
         console.info(JSON.stringify(report, null, 2));

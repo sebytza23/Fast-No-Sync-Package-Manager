@@ -16,6 +16,7 @@ const env = {
     PATH: path.dirname(process.execPath) + path.delimiter + process.env.PATH,
     DENO_DIR: path.join(scratch, 'deno-cache'),
     YARN_ENABLE_TELEMETRY: '0',
+    FNSPM_DATA_DIR: path.join(scratch, 'fnspm-data'),
 };
 let registry;
 let registryURL;
@@ -316,6 +317,65 @@ async function main() {
             );
             console.log(
                 `Native ${manager} verified: install, repeat install, lockfile install, resolution, scripts, doctor, legacy upgrade, restore.`,
+            );
+
+            command(
+                process.execPath,
+                [cli, 'initialize', '--external', '--pm', manager],
+                root,
+            );
+            command(process.execPath, [cli, 'migrate'], root);
+            const automatic = JSON.parse(
+                fs.readFileSync(path.join(root, '.fnspm-state.json'), 'utf8'),
+            ).target;
+            assert.ok(
+                automatic.startsWith(fs.realpathSync(env.FNSPM_DATA_DIR)),
+            );
+            command(
+                process.execPath,
+                [cli, '--pm', manager, ...lockedInstall(manager)],
+                root,
+            );
+            command(
+                process.execPath,
+                [
+                    cli,
+                    '--pm',
+                    manager,
+                    manager === 'deno' ? 'task' : 'run',
+                    'verify',
+                ],
+                root,
+            );
+            const relocated = path.join(scratch, manager + '-relocated');
+            command(process.execPath, [cli, '--relocate', relocated], root);
+            command(
+                process.execPath,
+                [cli, '--pm', manager, ...lockedInstall(manager)],
+                root,
+            );
+            assert.equal(
+                JSON.parse(
+                    fs.readFileSync(
+                        path.join(root, '.fnspm-state.json'),
+                        'utf8',
+                    ),
+                ).target,
+                relocated,
+            );
+            command(
+                process.execPath,
+                ['-e', "if(require('fnspm-fixture')!==42)process.exit(1)"],
+                root,
+            );
+            command(
+                process.execPath,
+                [cli, 'doctor', '--pm', manager, '--json'],
+                root,
+            );
+            command(process.execPath, [cli, 'restore'], root);
+            console.log(
+                `Native ${manager} automatic storage verified: frozen installs, scripts, relocation, retained destination, dependency resolution, doctor and restore.`,
             );
 
             const workspace = path.join(scratch, `${manager}-workspace`);

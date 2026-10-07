@@ -13,7 +13,7 @@ export interface SymlinkConfig {
     addToGitIgnore: boolean;
     /** A single directory name inside the project. */
     nosyncName: string;
-    /** Optional absolute path to a dedicated dependency directory on the same filesystem. */
+    /** Absolute dedicated destination, or 'auto' for managed external storage on the same filesystem. */
     storagePath?: string;
 }
 export interface DebugConfig {

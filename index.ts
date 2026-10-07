@@ -27,6 +27,10 @@ import {
     isDependencyCommand,
 } from './src/utils/cli';
 import { doctor } from './src/utils/doctor';
+import { configurationFailure } from './src/utils/diagnostics';
+import { completionScript } from './src/utils/completion';
+import { storageAction, relocationAction } from './src/utils/storage-cli';
+import { storageConfigDetails } from './src/utils/storage-path';
 
 export async function main(args = process.argv.slice(2)): Promise<number> {
     if (!args.length || ['help', '--help', '-h'].includes(args[0])) {
@@ -37,7 +41,26 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
         console.info(require('../package.json').version);
         return 0;
     }
+    if (args[0] === '--completion') {
+        if (args.length !== 2)
+            throw new Error(
+                'Usage: fnspm --completion <bash|zsh|fish|powershell>',
+            );
+        console.info(completionScript(args[1]));
+        return 0;
+    }
+    const information = args[0] === '--info';
+    if (information) {
+        if (args.includes('--fix') || args.includes('--dry-run'))
+            throw new Error(
+                'Usage: fnspm --info [--json] [--size] [--pm <manager>]',
+            );
+        args = ['doctor', ...args.slice(1)];
+    } else if (args[0] === '--why')
+        args = ['config', '--show', ...args.slice(1)];
     const cwd = fs.realpathSync(process.cwd());
+    if (args[0] === '--storage') return storageAction(args.slice(1), cwd);
+    if (args[0] === '--relocate') return relocationAction(args.slice(1), cwd);
     if (['initialize', 'init-config'].includes(args[0])) {
         await initialize(args.slice(1), cwd);
         return 0;
@@ -54,8 +77,45 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
         );
         return 0;
     }
-    const root = fs.realpathSync(findProjectRoot(cwd));
-    const configDetails = await loadConfigDetails(root);
+    const inspection = args[0] === 'migrate' ? null : parseRunArgs(args);
+    const doctorInvocation = inspection?.args[0] === 'doctor';
+    if (
+        doctorInvocation &&
+        (inspection.args
+            .slice(1)
+            .some(
+                (arg) =>
+                    !['--fix', '--dry-run', '--json', '--size'].includes(arg),
+            ) ||
+            (inspection.args.includes('--dry-run') &&
+                !inspection.args.includes('--fix')))
+    )
+        throw new Error(
+            'Usage: fnspm doctor [--pm <manager>] [--json] [--size] [--fix [--dry-run]]',
+        );
+    let root: string;
+    try {
+        root = fs.realpathSync(findProjectRoot(cwd));
+    } catch (error) {
+        if (doctorInvocation && inspection.args.includes('--json'))
+            return configurationFailure(
+                { cwd, projectRoot: cwd, dependencyRoot: cwd },
+                error,
+                'project.invalid',
+            );
+        throw error;
+    }
+    let configDetails;
+    try {
+        configDetails = await loadConfigDetails(root);
+    } catch (error) {
+        if (doctorInvocation && inspection.args.includes('--json'))
+            return configurationFailure(
+                { cwd, projectRoot: root, dependencyRoot: cwd },
+                error,
+            );
+        throw error;
+    }
     const config = configDetails.config;
     const dependencyRoot =
         lstat(path.join(cwd, 'node_modules')) ||
@@ -74,7 +134,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
         );
         return 0;
     }
-    const parsed = parseRunArgs(args);
+    const parsed = inspection!;
     const ownArgs = parsed.args.slice(
         0,
         parsed.args.indexOf('--') < 0
@@ -91,7 +151,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
                 'Usage: fnspm config --show [--json] [--pm <manager>]',
             );
         showConfig(
-            configDetails,
+            storageConfigDetails(dependencyRoot, configDetails),
             cwd,
             root,
             dependencyRoot,
@@ -101,20 +161,29 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
         return 0;
     }
     if (parsed.args[0] === 'doctor') {
-        if (
-            parsed.args
-                .slice(1)
-                .some((arg) => !['--fix', '--dry-run'].includes(arg)) ||
-            (parsed.args.includes('--dry-run') &&
-                !parsed.args.includes('--fix'))
-        )
-            throw new Error(
-                'Usage: fnspm doctor [--pm <manager>] [--fix [--dry-run]]',
-            );
-        return doctor(dependencyRoot, config, parsed.manager, root, {
-            fix: parsed.args.includes('--fix'),
-            dryRun: parsed.args.includes('--dry-run'),
-        });
+        const context = {
+            cwd,
+            projectRoot: root,
+            dependencyRoot,
+            configuration: configDetails,
+        };
+        try {
+            return doctor(dependencyRoot, config, parsed.manager, root, {
+                fix: parsed.args.includes('--fix'),
+                dryRun: parsed.args.includes('--dry-run'),
+                json: parsed.args.includes('--json'),
+                size: parsed.args.includes('--size'),
+                context,
+            });
+        } catch (error) {
+            if (parsed.args.includes('--json'))
+                return configurationFailure(
+                    context,
+                    error,
+                    'inspection.failed',
+                );
+            throw error;
+        }
     }
     const manager = parsed.manager ?? detectPackageManager(root, config);
     const dependencyCommand = isDependencyCommand(parsed.args, manager);
