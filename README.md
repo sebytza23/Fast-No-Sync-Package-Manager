@@ -1,7 +1,8 @@
 # FNSPM — Fast No Sync Package Manager
 
-Version 1.0.0 adds configuration inspection, guided recovery, complete operation
-locks, and a fix for Bun workspace installs through Windows path aliases.
+Version 1.1.0 adds `--info`, `--why`, JSON diagnostics, optional dependency-size
+inspection, and contextual shell completions. Existing configuration, migration
+and native command forwarding remain supported.
 
 **[Read the documentation](https://sebytza23.github.io/Fast-No-Sync-Package-Manager/)**
 for setup guides, project and workspace configuration, the CLI reference,
@@ -23,6 +24,10 @@ mechanism.
 npm install -g fnspm
 fnspm --help
 fnspm --version
+fnspm --info --json                 # health, runtime, manager and storage report
+fnspm --why                        # explain settings and manager selection
+fnspm --info --size                # optional logical dependency-size scan
+fnspm --completion zsh             # generate completions without changing profiles
 
 fnspm install                       # auto-detect the project's manager
 fnspm --pm npm install lodash --save-dev

@@ -54,6 +54,10 @@ function buildEdition(edition) {
     md.renderer.rules.link_open = (tokens, idx, opts, env, self) => {
         const token = tokens[idx];
         const href = token.attrGet('href');
+        if (edition.archived && href === 'versions.md') {
+            token.attrSet('href', projectBase + 'versions/');
+            return fallbackLink(tokens, idx, opts, env, self);
+        }
         if (href === 'LICENSE')
             token.attrSet(
                 'href',

@@ -1,19 +1,5 @@
 # Changelog
 
-## 1.1.0 — 2026-10-07
-
-- Add read-only `--info` reports with runtime, project/workspace context, manager
-  selection, configuration origins, dependency layout and ownership status.
-- Add `--why` as a configuration explanation flag, preserving native `info`,
-  `why`, `clean`, and `completion` commands and later native arguments.
-- Add `doctor --json` with a versioned diagnostic schema, issue codes and repair
-  plans, including JSON errors for invalid configuration or project manifests.
-- Add optional `--size` inspection of unique regular-file bytes, deduplicating
-  hardlinks and skipping child symlinks and unverified dependency storage.
-- Generate contextual Bash, Zsh, Fish and PowerShell completions with
-  `--completion`, without loading project configuration or installing files.
-- Preserve the complete 1.0.1 documentation before updating current guides.
-
 ## 1.0.1 — 2026-10-04
 
 - Publish the documentation website link in npm package metadata and the README,

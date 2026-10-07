@@ -18,7 +18,7 @@ Choose that release above. To follow the current release instead, install from n
 npm install -g fnspm
 ```
 
-The 1.0.0 archive contains the complete guides written for that release. The 0.3.0 archive preserves its original release README and changelog; its navigation reflects the documentation available for that version.
+The 1.0.0 and 1.0.1 archives contain the complete guides preserved for those releases. The 0.3.0 archive preserves its original release README and changelog; its navigation reflects the documentation available for that version.
 
 ## How archived documentation works
 

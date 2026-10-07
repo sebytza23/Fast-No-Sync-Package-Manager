@@ -59,6 +59,29 @@ try {
         manifest.version,
     );
     assert.match(command(process.execPath, [executable, '--help']), /doctor/);
+    const why = JSON.parse(
+        command(process.execPath, [executable, '--why', '--json']),
+    );
+    assert.ok(why.config);
+    const info = JSON.parse(
+        command(process.execPath, [
+            executable,
+            '--info',
+            '--json',
+            '--pm',
+            'npm',
+        ]),
+    );
+    assert.equal(info.schemaVersion, 1);
+    assert.equal(info.runtime.fnspm, manifest.version);
+    assert.equal(info.packageManager.name, 'npm');
+    assert.equal(info.dependencies.layout, 'native');
+    assert.equal(info.dependencies.size, null);
+    assert.equal(fs.existsSync(path.join(scratch, '.fnspm-state.json')), false);
+    assert.match(
+        command(process.execPath, [executable, '--completion', 'bash']),
+        /complete -o default -F _fnspm_complete fnspm/,
+    );
     const installedBin = path.join(
         scratch,
         'node_modules',
@@ -105,7 +128,7 @@ void [manager, config, valid, invalid];\n`,
         path.join(scratch, 'tsconfig.json'),
     ]);
     console.log(
-        `Package verified: ${manifest.name}@${manifest.version} — installed CLI, side-effect-free import, complete TypeScript declarations.`,
+        `Package verified: ${manifest.name}@${manifest.version} — installed CLI and diagnostics, completions, side-effect-free import, complete TypeScript declarations.`,
     );
 } finally {
     fs.rmSync(scratch, { recursive: true, force: true });

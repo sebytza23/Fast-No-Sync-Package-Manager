@@ -133,14 +133,3 @@ Do not create an empty dependency directory merely to silence this message. Chec
 FNSPM preserves the manager's output and exit status. Tracked storage was restored before a dependency-changing command, and failure leaves the native layout available for inspection.
 
 Fix the native issue, then rerun the command. If the manager succeeds but optional conversion is skipped, run `doctor` and inspect storage separately; successful installation does not prove migration succeeded.
-
-## Collect an issue report
-
-Use a read-only JSON diagnostic when reporting a problem:
-
-```sh
-fnspm --info --json
-fnspm --why --json
-```
-
-The information report includes runtime versions, project/workspace context, manager selection and dependency health. It remains machine-readable when configuration loading fails. Remove private paths or other project details before sharing it publicly. Use `--size` only when a dependency-size scan is useful.
