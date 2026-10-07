@@ -2,6 +2,8 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { spawn } = require('node:child_process');
+const { setTimeout: pause } = require('node:timers/promises');
 const {
     fixture,
     config,
@@ -571,6 +573,73 @@ test('restore completes a pending relocation before returning native dependencie
     migrateDependencies(root, mergeConfig());
     assert.equal(state(root).target, target);
 });
+
+test(
+    'forced process termination retains a recoverable journal and never clears its unknown lock automatically',
+    { timeout: 15000 },
+    async (t) => {
+        inventory(t);
+        const root = fixture(t);
+        const external = fixture(t);
+        dependencies(root);
+        migrateDependencies(root, mergeConfig());
+        const original = state(root);
+        const target = path.join(external, 'deps');
+        const checkpoint = path.join(root, 'paused');
+        const implementation = path.resolve(
+            __dirname,
+            '../dist/src/utils/dependencies.js',
+        );
+        const script = `const fs=require('node:fs'); const move=fs.renameSync;
+fs.renameSync=(from,to)=>{if(from===${JSON.stringify(original.target)}){fs.writeFileSync(${JSON.stringify(checkpoint)},'ready'); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0);} return move(from,to);};
+require(${JSON.stringify(implementation)}).relocateDependencies(${JSON.stringify(root)},${JSON.stringify(mergeConfig())},${JSON.stringify(target)});`;
+        const child = spawn(process.execPath, ['-e', script], {
+            cwd: root,
+            env: process.env,
+            stdio: ['ignore', 'ignore', 'pipe'],
+        });
+        let errors = '';
+        child.stderr.on('data', (chunk) => (errors += chunk));
+        const exited = new Promise((resolve) => child.once('exit', resolve));
+        t.after(() => {
+            if (child.exitCode === null && child.signalCode === null)
+                child.kill('SIGKILL');
+        });
+        const deadline = Date.now() + 5000;
+        while (
+            !fs.existsSync(checkpoint) &&
+            Date.now() < deadline &&
+            child.exitCode === null &&
+            child.signalCode === null
+        )
+            await pause(20);
+        assert.ok(fs.existsSync(checkpoint), errors);
+        child.kill('SIGKILL');
+        await exited;
+        assert.ok(fs.existsSync(path.join(root, RELOCATION_FILE)));
+        assert.equal(
+            JSON.parse(fs.readFileSync(path.join(root, LOCK_FILE), 'utf8')).pid,
+            child.pid,
+        );
+        const refused = run(root, ['--relocate', '--recover', '--json']);
+        assert.equal(refused.status, 1);
+        assert.match(
+            JSON.parse(refused.stdout).message,
+            /operation is running or was interrupted/,
+        );
+        assert.equal(
+            fs.readFileSync(path.join(original.target, 'sentinel.txt'), 'utf8'),
+            'preserve me',
+        );
+        // This test owns the fixture and has awaited the stopped process; clear only its retained lock.
+        fs.unlinkSync(path.join(root, LOCK_FILE));
+        const recovered = run(root, ['--relocate', '--recover', '--json']);
+        assert.equal(recovered.status, 0, recovered.stderr);
+        assert.equal(state(root).target, target);
+        assert.equal(sentinel(root), 'preserve me');
+        assert.ok(!fs.existsSync(path.join(root, RELOCATION_FILE)));
+    },
+);
 
 test('existing tracked storage can be explicitly registered without moving dependencies', (t) => {
     const data = inventory(t);
