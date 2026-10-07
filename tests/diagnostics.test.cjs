@@ -74,6 +74,7 @@ test('information and why flags preserve independent section settings and inheri
 
 test('doctor JSON retains error codes and outputs valid JSON for malformed config and project manifests', (t) => {
     const root = fixture(t);
+    dependencies(root);
     fs.writeFileSync(
         path.join(root, 'fnspm.config.cjs'),
         'throw new Error("broken config")',
@@ -89,6 +90,9 @@ test('doctor JSON retains error codes and outputs valid JSON for malformed confi
         assert.equal(report.status, 'error');
         assert.equal(report.issues[0].code, 'configuration.invalid');
         assert.match(report.issues[0].message, /broken config/);
+        assert.equal(report.dependencies.layout, 'unknown');
+        assert.equal(report.dependencies.state, 'unknown');
+        assert.equal(report.dependencies.lockPresent, null);
     }
     fs.unlinkSync(path.join(root, 'fnspm.config.cjs'));
     fs.writeFileSync(path.join(root, 'package.json'), '{broken');

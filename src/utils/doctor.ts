@@ -198,6 +198,7 @@ export function doctor(
             );
         }
     }
+    report.dependencies.state = 'none';
     if (lstat(path.join(root, STATE_FILE))) {
         try {
             restoreDependencies(root, true);

@@ -55,12 +55,14 @@ export function diagnosticReport(context: DiagnosticContext) {
         },
         dependencies: {
             source: path.join(context.dependencyRoot, 'node_modules'),
-            layout: 'absent' as 'absent' | 'native' | 'symlink' | 'other',
+            layout: 'unknown' as
+                'unknown' | 'absent' | 'native' | 'symlink' | 'other',
             linkTarget: null as string | null,
             configuredStorage: null as string | null,
-            state: 'none' as 'none' | 'valid' | 'recovery-needed' | 'invalid',
+            state: 'unknown' as
+                'unknown' | 'none' | 'valid' | 'recovery-needed' | 'invalid',
             stateFile: path.join(context.dependencyRoot, STATE_FILE),
-            lockPresent: false,
+            lockPresent: null as boolean | null,
             operationLockFile: path.join(context.dependencyRoot, LOCK_FILE),
             size: null as DependencySize | null,
         },

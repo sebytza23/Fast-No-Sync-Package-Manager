@@ -164,6 +164,8 @@ See [Troubleshooting](troubleshooting.md) for the repair workflow and error-spec
 
 Use issue codes rather than parsing English messages. Invalid configuration or project manifests still produce JSON with `status: "error"` and exit code `1`. Invalid CLI syntax is reported as a usage error.
 
+If inspection stops before dependency checks, layout and ownership state are `unknown` and lock presence is `null`. These values indicate missing observations, rather than absent dependencies or locks.
+
 `doctor --json --fix --dry-run` includes the repair plan and diagnoses the unchanged layout. `doctor --json --fix` reports the layout after applying supported repairs.
 
 Size measurement is opt-in with `--size`. Ordinary inspection does not walk the dependency tree. `dependencies.size` contains the measured path, `apparentBytes` as a decimal string, regular-file entry count, directory count, skipped child symlinks, deduplicated hardlink count and a `complete` flag. Bytes count each regular-file identity once; the file count includes duplicate hardlink entries.
