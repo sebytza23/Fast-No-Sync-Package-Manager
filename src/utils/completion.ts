@@ -1,6 +1,7 @@
 const managers = 'npm yarn pnpm bun deno';
 const candidates: Record<string, string> = {
     root: '--info --why --completion --help --version --pm --debug help initialize init-config doctor migrate restore config install add run exec',
+    rootAfterFlags: '--pm --debug doctor config install add run exec',
     manager: managers,
     detection: 'auto default ' + managers,
     shell: 'bash zsh fish powershell',
@@ -21,17 +22,18 @@ const candidates: Record<string, string> = {
 
 const shellClassifier = `
 _fnspm_candidates() {
-    local command="" expect="" word fix="" show="" other="" category="root"
+    local command="" expect="" word fix="" show="" other="" category="root" index=0
     for word in "$@"; do
+        index=$((index+1))
         [ "$word" = "--" ] && return
         if [ -n "$expect" ]; then [ "$word" = "=" ] && continue; expect=""; continue; fi
         case "$word" in
             --pm) expect="manager"; continue ;;
             --detection) expect="detection"; continue ;;
-            --completion) expect="shell"; command="--completion"; continue ;;
+            --completion) if [ "$index" -eq 1 ]; then expect="shell"; command="--completion"; else command="native"; fi; continue ;;
             --sync-folder|--storage-path) expect="path"; continue ;;
             --pm=*|--detection=*|--sync-folder=*|--storage-path=*|--debug) continue ;;
-            --info|--why) [ -z "$command" ] && command="$word"; continue ;;
+            --info|--why) if [ "$index" -eq 1 ]; then command="$word"; elif [ -z "$command" ]; then command="native"; fi; continue ;;
             --fix) fix="yes" ;;
             --show) show="yes" ;;
             --*) continue ;;
@@ -41,7 +43,7 @@ _fnspm_candidates() {
     if [ -n "$expect" ]; then category="$expect"
     else
         case "$command" in
-            '') category="root" ;;
+            '') category="root"; [ "$#" -gt 0 ] && category="rootAfterFlags" ;;
             doctor) category="doctor"; [ -n "$fix" ] && category="doctorFix" ;;
             config) category="config"; [ -n "$show" ] && category="configShow"; [ -n "$other" ] && category="native" ;;
             initialize|init-config) category="initialize" ;;
@@ -120,8 +122,10 @@ function fish(): string {
     set -l show_config ''
     set -l other ''
     set -l category root
+    set -l index 0
     set -l words (commandline -opc)
     for word in $words[2..-1]
+        set index (math $index + 1)
         if test "$word" = --; return; end
         if test -n "$expect"; set expect ''; continue; end
         switch $word
@@ -130,13 +134,14 @@ function fish(): string {
             case --detection
                 set expect detection; continue
             case --completion
-                set expect shell; set command_name --completion; continue
+                if test $index -eq 1; set expect shell; set command_name --completion; else; set command_name native; end
+                continue
             case --sync-folder --storage-path
                 set expect path; continue
             case '--pm=*' '--detection=*' '--sync-folder=*' '--storage-path=*' --debug
                 continue
             case --info --why
-                if test -z "$command_name"; set command_name $word; end
+                if test $index -eq 1; set command_name $word; else if test -z "$command_name"; set command_name native; end
                 continue
             case --fix
                 set fix yes
@@ -154,6 +159,7 @@ function fish(): string {
         switch $command_name
             case ''
                 set category root
+                if test (count $words) -gt 1; set category rootAfterFlags; end
             case doctor
                 set category doctor
                 if test -n "$fix"; set category doctorFix; end
@@ -173,7 +179,7 @@ function fish(): string {
     end
     set -l cur (commandline -ct)
     if string match -q -- '--pm=*' $cur
-        if not contains -- $category root doctor doctorFix --info --why config configShow initialize native; return; end
+        if not contains -- $category root rootAfterFlags doctor doctorFix --info --why config configShow initialize native; return; end
         for manager in npm yarn pnpm bun deno
             printf '%s\\n' --pm=$manager
         end
@@ -213,19 +219,20 @@ ${Object.entries(candidates)
 }
 $FnspmCompleter = {
     param($wordToComplete, $commandAst, $cursorPosition)
-    $commandName = ''; $expect = ''; $fix = $false; $showConfig = $false; $other = $false; $category = 'root'
+    $commandName = ''; $expect = ''; $fix = $false; $showConfig = $false; $other = $false; $category = 'root'; $index = 0
     $start = $cursorPosition - $wordToComplete.Length
     $words = @($commandAst.CommandElements | Select-Object -Skip 1 | Where-Object { $_.Extent.EndOffset -le $start })
     foreach ($element in $words) {
+        $index++
         $word = if ($element -is [System.Management.Automation.Language.StringConstantExpressionAst]) { $element.Value } else { $element.Extent.Text }
         if ($word -eq '--') { return }
         if ($expect) { $expect = ''; continue }
         if ($word -eq '--pm') { $expect = 'manager'; continue }
         if ($word -eq '--detection') { $expect = 'detection'; continue }
-        if ($word -eq '--completion') { $expect = 'shell'; $commandName = '--completion'; continue }
+        if ($word -eq '--completion') { if ($index -eq 1) { $expect = 'shell'; $commandName = '--completion' } else { $commandName = 'native' }; continue }
         if ($word -in @('--sync-folder', '--storage-path')) { $expect = 'path'; continue }
         if ($word -match '^--(pm|detection|sync-folder|storage-path)=') { continue }
-        if ($word -in @('--info', '--why')) { if (-not $commandName) { $commandName = $word }; continue }
+        if ($word -in @('--info', '--why')) { if ($index -eq 1) { $commandName = $word } elseif (-not $commandName) { $commandName = 'native' }; continue }
         if ($word -eq '--fix') { $fix = $true; continue }
         if ($word -eq '--show') { $showConfig = $true; continue }
         if ($word.StartsWith('-')) { continue }
@@ -238,6 +245,7 @@ $FnspmCompleter = {
     elseif ($commandName -in @('--info','--why','migrate','restore')) { $category = $commandName }
     elseif ($commandName -in @('--completion','help')) { $category = 'none' }
     elseif ($commandName) { $category = 'native' }
+    elseif ($words.Count) { $category = 'rootAfterFlags' }
     $choices = $FnspmCandidates[$category] -split ' '
     if ($wordToComplete.StartsWith('--pm=')) { if ($choices -notcontains '--pm') { return } };
     if ($choices -contains '--pm' -and $wordToComplete.StartsWith('--pm=')) { $choices = $FnspmCandidates.manager -split ' ' | ForEach-Object { '--pm=' + $_ } }

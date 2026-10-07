@@ -21,6 +21,22 @@ const scenarios = [
     },
     { words: ['fnspm', ''], includes: ['--info', '--why', 'doctor'] },
     {
+        words: ['fnspm', '--pm', 'bun', ''],
+        includes: ['doctor', 'config'],
+        excludes: [
+            '--info',
+            '--why',
+            '--completion',
+            'initialize',
+            'migrate',
+            'restore',
+        ],
+    },
+    {
+        words: ['fnspm', '--pm', 'bun', '--info', ''],
+        excludes: ['--json', '--size'],
+    },
+    {
         words: ['fnspm', '--pm', ''],
         includes: ['npm', 'pnpm'],
         excludes: ['doctor'],
