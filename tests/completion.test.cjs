@@ -52,8 +52,20 @@ const scenarios = [
     },
 ];
 function verify(result, scenario) {
-    assert.equal(result.status, 0, result.stderr);
-    const values = result.stdout.trim().split(/\r?\n/).filter(Boolean);
+    assert.equal(
+        result.status,
+        0,
+        JSON.stringify(scenario.words) +
+            '\n' +
+            result.stderr +
+            '\n' +
+            result.stdout,
+    );
+    const values = result.stdout
+        .trim()
+        .split(/\r?\n/)
+        .map((value) => value.split('\t')[0])
+        .filter(Boolean);
     for (const word of scenario.includes ?? [])
         assert.ok(
             values.includes(word),
@@ -110,11 +122,7 @@ for (const shell of ['bash', 'zsh', 'fish', 'pwsh']) {
                     script =
                         'autoload -Uz compinit; compinit -D\nsource "$1"\nshift\nwords=("$@")\nCURRENT=${#words[@]}\ncompadd() { [ "$1" = "--" ] && shift; printf "%s\\n" "$@"; }\n_files() { :; }\n_fnspm_complete';
                 if (shell === 'fish')
-                    script =
-                        'source "$argv[1]"\ncomplete -C "$argv[2]" | string replace -r "\\t.*" ""';
-                if (shell === 'pwsh')
-                    script =
-                        '. $args[0]; $line = $args[1]; (TabExpansion2 $line $line.Length).CompletionMatches | ForEach-Object { $_.CompletionText }';
+                    script = 'source "$argv[1]"\ncomplete -C "$argv[2]"';
                 if (shell === 'pwsh') {
                     const driver = path.join(root, 'driver.ps1');
                     fs.writeFileSync(
@@ -141,16 +149,7 @@ for (const shell of ['bash', 'zsh', 'fish', 'pwsh']) {
                 const args =
                     shell === 'fish'
                         ? ['-c', script, file, scenario.words.join(' ')]
-                        : shell === 'pwsh'
-                          ? [
-                                '-NoProfile',
-                                '-NonInteractive',
-                                '-Command',
-                                script,
-                                file,
-                                scenario.words.join(' '),
-                            ]
-                          : ['-c', script, 'fixture', file, ...scenario.words];
+                        : ['-c', script, 'fixture', file, ...scenario.words];
                 verify(
                     spawnSync(shell, args, {
                         cwd: root,
