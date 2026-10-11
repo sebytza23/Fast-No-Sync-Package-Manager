@@ -46,6 +46,10 @@ export function processCliArgs(args: string[]): Config {
             case '--storage-path':
                 config.symlink.storagePath = value();
                 break;
+            case '--external':
+                config.symlink.storagePath = 'auto';
+                config.symlink.enabled = true;
+                break;
             case '--add-to-gitignore':
                 config.symlink.addToGitIgnore = boolean();
                 break;
@@ -93,7 +97,7 @@ export async function initialize(args: string[], root: string): Promise<void> {
         const answers = await prompt<{
             manager: PackageManagerType;
             detection: DetectionMode;
-            symlink: boolean;
+            storage: 'external' | 'local' | 'native';
             nosyncName: string;
             gitignore: boolean;
             verbose: boolean;
@@ -111,10 +115,14 @@ export async function initialize(args: string[], root: string): Promise<void> {
                 choices: ['auto', 'default', ...VALID_PACKAGE_MANAGERS],
             },
             {
-                type: 'confirm',
-                name: 'symlink',
-                message: 'Move dependencies to a local nosync folder?',
-                initial: true,
+                type: 'select',
+                name: 'storage',
+                message: 'Where should dependencies live?',
+                choices: [
+                    { name: 'local', message: 'Project-local nosync folder' },
+                    { name: 'external', message: 'Automatic external storage' },
+                    { name: 'native', message: 'Keep native node_modules' },
+                ],
             },
             {
                 type: 'input',
@@ -141,7 +149,10 @@ export async function initialize(args: string[], root: string): Promise<void> {
                 detection: answers.detection,
             },
             symlink: {
-                enabled: answers.symlink,
+                enabled: answers.storage !== 'native',
+                ...(answers.storage === 'external'
+                    ? { storagePath: 'auto' }
+                    : {}),
                 nosyncName: answers.nosyncName,
                 addToGitIgnore: answers.gitignore,
             },

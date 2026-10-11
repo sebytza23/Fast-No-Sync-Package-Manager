@@ -46,19 +46,23 @@ export default config;
 
 ## Every setting
 
-| Setting                    | Default                 | Meaning                                                                                 |
-| -------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
-| `packageManager.default`   | `'npm'`                 | Fallback manager, or the chosen manager when detection is `'default'`                   |
-| `packageManager.detection` | `'auto'`                | `'auto'`, `'default'`, or one of `'npm'`, `'yarn'`, `'pnpm'`, `'bun'`, `'deno'`         |
-| `symlink.enabled`          | `true`                  | Convert local dependencies after eligible successful native commands                    |
-| `symlink.addToGitIgnore`   | `true`                  | Add ignore rules during migration and supported repairs                                 |
-| `symlink.nosyncName`       | `'node_modules.nosync'` | A single safe directory name inside the project                                         |
-| `symlink.storagePath`      | Not set                 | Absolute path to a dedicated external destination; takes precedence over the local name |
-| `debug.verbose`            | `false`                 | Print the command and migration diagnostics                                             |
+| Setting                    | Default                 | Meaning                                                                                                       |
+| -------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `packageManager.default`   | `'npm'`                 | Fallback manager, or the chosen manager when detection is `'default'`                                         |
+| `packageManager.detection` | `'auto'`                | `'auto'`, `'default'`, or one of `'npm'`, `'yarn'`, `'pnpm'`, `'bun'`, `'deno'`                               |
+| `symlink.enabled`          | `true`                  | Convert local dependencies after eligible successful native commands                                          |
+| `symlink.addToGitIgnore`   | `true`                  | Add ignore rules during migration and supported repairs                                                       |
+| `symlink.nosyncName`       | `'node_modules.nosync'` | A single safe directory name inside the project                                                               |
+| `symlink.storagePath`      | Not set                 | Absolute external destination, or `'auto'` for managed external storage; takes precedence over the local name |
+| `debug.verbose`            | `false`                 | Print the command and migration diagnostics                                                                   |
 
 Booleans must be actual JavaScript `true` or `false`, not strings. Unknown sections and unknown settings are rejected. Names containing path separators, reserved metadata names, or invalid Windows filename characters are rejected.
 
-`storagePath` must be absolute. Its parent must already exist on the same filesystem, and the destination must be dedicated to this project. See [Dependency storage](storage.md).
+An explicit `storagePath` must be absolute. Its parent must already exist on the same filesystem, and the destination must be dedicated to this project. With `'auto'`, FNSPM chooses a project-specific external destination and creates its managed parent directories only during an applied migration. See [Dependency storage](storage.md).
+
+`fnspm initialize --external` writes `storagePath: 'auto'` and enables conversion. The interactive wizard also offers automatic external storage, project-local storage and the native layout. Existing config files are never overwritten.
+
+Relocation writes a project-local `.fnspm-storage.json` preference instead of rewriting executable JavaScript configuration. This preference overrides only `symlink.storagePath` for its dependency owner; it does not change manager selection, conversion enablement or section settings. `--why --json` identifies the preference file as that setting's origin. `--relocate --configured` returns to the destination in the JavaScript config, or clears the preference after dependencies have been restored. Restoration alone keeps the preference for future installs.
 
 ## Selecting a manager deliberately
 
@@ -85,6 +89,8 @@ Setting only `default: 'pnpm'` does **not** override a manager declared in the m
 FNSPM searches upward for the nearest configuration, stopping at a Git boundary. A directory without its own config can inherit a parent's config. A nested Git repository creates a new boundary.
 
 A section config overrides the parent config **as a whole**. FNSPM merges the selected file with built-in defaults, not with the parent's settings.
+
+Storage preferences remain independent per dependency owner and are not inherited by sibling sections.
 
 Suppose the root config sets Bun and disables conversion. If `packages/web/fnspm.config.cjs` contains only:
 
@@ -136,7 +142,8 @@ If dependencies are already converted, run `fnspm restore` to return them immedi
 | `--symlink`, `--no-symlink`                   | Enable or disable conversion                                    |
 | `--no-sync-folder`                            | Alias for `--no-symlink`                                        |
 | `--sync-folder <name>`                        | Set the local storage name                                      |
-| `--storage-path <absolute-path>`              | Set external storage                                            |
+| `--storage-path <path>`                       | Set an absolute destination or `auto`                           |
+| `--external`                                  | Enable automatic external storage                               |
 | `--add-to-gitignore`, `--no-add-to-gitignore` | Control generated ignore rules                                  |
 | `--verbose`, `--no-verbose`                   | Control command diagnostics                                     |
 

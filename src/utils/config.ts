@@ -75,6 +75,8 @@ export function validateConfig(config: Config): void {
             '.git',
             '.fnspm-state.json',
             '.fnspm-operation.lock',
+            '.fnspm-storage.json',
+            '.fnspm-relocate.json',
         ].includes(name.toLowerCase()) ||
         /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)
     ) {
@@ -84,11 +86,12 @@ export function validateConfig(config: Config): void {
     }
     if (
         config.symlink.storagePath !== undefined &&
+        config.symlink.storagePath !== 'auto' &&
         (typeof config.symlink.storagePath !== 'string' ||
             !path.isAbsolute(config.symlink.storagePath) ||
             config.symlink.storagePath.includes('\0'))
     ) {
-        throw new Error('symlink.storagePath must be an absolute path');
+        throw new Error('symlink.storagePath must be an absolute path or auto');
     }
 }
 

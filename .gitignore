@@ -187,6 +187,8 @@ node_modules.nosync/
 # FNSPM local migration metadata
 .fnspm-state.json
 .fnspm-operation.lock
+.fnspm-storage.json
+.fnspm-relocate.json
 
 # Generated documentation
 /docs/site/

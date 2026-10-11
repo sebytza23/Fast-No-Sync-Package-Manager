@@ -23,7 +23,7 @@ fnspm config --show
 fnspm doctor
 ```
 
-You do not need to regenerate a valid 0.3 config. Keep your recorded state beside its original project and storage. If you intend to change the storage destination or move the project, restore dependencies before doing so.
+You do not need to regenerate a valid 0.3 config. Keep your recorded state beside its original project and storage. Restore before moving the project or editing its storage config manually. In 1.1, `--relocate` can change managed storage in place after validation; see [Relocating managed storage](storage.md#relocating-managed-storage).
 
 Inspect each independently configured workspace section from its own directory. A section config still replaces the parent config and receives defaults for omitted fields.
 
@@ -72,6 +72,14 @@ fnspm doctor
 For a workspace section, already tracked shared root storage is refreshed with the root's settings. Untracked ancestors and siblings are not newly managed.
 
 ## The v1 compatibility boundary
+
+### New storage features in 1.1
+
+Existing tracked installations can join the inventory with `fnspm --storage register`; no dependency move is required. Automatic external storage is opt-in through `initialize --external` or `storagePath: 'auto'`. Local conversion remains the default.
+
+Relocation keeps migration state at schema version 1 and adds a local destination preference and a temporary recovery journal. Complete pending recovery before using an older CLI. Before downgrading to 1.0/0.3, restore dependencies, clear any relocation preference with `--relocate --configured`, and replace `'auto'` with an older supported configuration. Older releases do not support the new flags or `'auto'` setting.
+
+### Supported interface
 
 The documented CLI, config settings and resolution, top-level exported types, and `main` function form the supported public interface. Internal `dist/src` modules and migration metadata are implementation details.
 
