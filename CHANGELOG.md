@@ -1,7 +1,10 @@
 # Changelog
 
-## 1.1.0 — 2026-10-07
+## 1.1.0 — 2026-10-11
 
+- Preserve managed storage across npm dependency commands with configuration
+  values before the command, native aliases and option shorthands. Respect explicit
+  false values and npm global/local precedence when selecting local conversion.
 - Add read-only `--info` reports with runtime, project/workspace context, manager
   selection, configuration origins, dependency layout and ownership status.
 - Add `--why` as a configuration explanation flag, preserving native `info`,
