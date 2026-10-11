@@ -1,5 +1,8 @@
 # FNSPM — Fast No Sync Package Manager
 
+Version 1.0.0 adds configuration inspection, guided recovery, complete operation
+locks, and a fix for Bun workspace installs through Windows path aliases.
+
 FNSPM runs your existing package manager and optionally keeps `node_modules` in a
 separate local directory connected by a symlink. It supports npm, Yarn, pnpm,
 Bun, and Deno command forwarding. Node.js 22 or newer is required.
@@ -35,6 +38,8 @@ manifest; `doctor` reports the executable version actually available.
 `initialize`, `init-config`, `doctor`, `migrate`, and `restore` are reserved
 FNSPM commands. `fnspm init` still invokes the native manager's `init` command.
 Use the manager directly if it has a command that collides with a reserved name.
+`config --show` is an FNSPM inspection command; other `config` commands are
+forwarded to the selected manager.
 
 ## Configuration
 
@@ -88,6 +93,21 @@ Only load configurations from projects you trust.
 
 Legacy boolean forms such as `--symlink true` and `--verbose false` also work.
 
+Inspect the effective settings without running a package manager or changing files:
+
+```sh
+fnspm config --show
+fnspm config --show --json
+fnspm config --show --pm pnpm
+```
+
+The report shows the invocation directory, project/detection root, local dependency
+directory, selected configuration file, origin of each setting, selected manager
+and selection reason, and configured storage path. JSON output uses the same
+information. Config files are evaluated as usual; inspection does not run the
+selected manager. This is useful when a section inherits a parent config or has
+its own override.
+
 ## Detection and workspaces
 
 Selection precedence:
@@ -123,11 +143,21 @@ parent config. Each section's local dependency directory is converted separately
 ```sh
 fnspm doctor                       # read-only diagnostics; nonzero for errors
 fnspm doctor --pm bun
+fnspm doctor --fix --dry-run       # preview safe repairs without writing files
+fnspm doctor --fix                 # apply safe repairs, then inspect again
 fnspm migrate --dry-run            # inspect without writing files
 fnspm migrate                      # migrate existing node_modules explicitly
 fnspm restore --dry-run
 fnspm restore                      # return tracked dependencies to node_modules
 ```
+
+`doctor --fix` can recreate a missing link to recorded storage with matching
+directory identity, clean up metadata after an interrupted restoration, and add
+missing `.gitignore` rules. It validates the repair plan before writing and never
+overwrites a conflicting dependency directory or removes an unknown operation
+lock. Preview can return a nonzero diagnostic status when a problem still exists;
+successful repair is followed by the normal health checks. Invalid or replaced
+storage needs manual inspection, and the report explains the next step.
 
 Migration renames the directory and creates a relative symlink on macOS/Linux or
 an absolute junction on Windows. It refuses existing destinations, foreign
@@ -141,7 +171,7 @@ behavior for `install`, `add`, `run`, `list`, and other commands. It only conver
 `node_modules` in the current invocation directory, including workspace sections;
 it does not start managing ancestor or sibling directories. Global,
 redirected, dry-run, and help/version invocations are excluded. `doctor` itself is
-read-only.
+read-only when invoked without `--fix`.
 
 Tracked local storage is restored before dependency-changing commands (even if
 automatic migration was disabled), so clean installs can replace `node_modules`.
@@ -185,6 +215,12 @@ guarantee about a provider's behavior.
 - Deno can use a global cache or local `node_modules`, depending on its
   [configuration](https://docs.deno.com/runtime/reference/deno_json/). Only an
   existing local dependency directory can be migrated.
+- FNSPM expands Windows short directory names (such as `RUNNER~1`) and resolves
+  directory aliases before launching Bun. This avoids Bun's workspace link
+  failure when its current directory and resolved manifest use different path
+  spellings. Native tests verify installs and frozen installs through short
+  paths and junctions, including projects and Bun installed on different drives,
+  workspace links, relative lockfile keys, automatic conversion, and restoration.
 - A valid project-local symlink from FNSPM 0.2 that matches `nosyncName` is adopted
   without moving or deleting dependency files. Run `migrate --dry-run` to inspect
   adoption, or `migrate` to record ownership before `restore`. Automatic conversion
@@ -195,8 +231,14 @@ guarantee about a provider's behavior.
   `restore`. A stale `.fnspm-operation.lock` requires checking that the recorded
   process is no longer running before removing the lock. Never delete dependency
   storage to resolve a lock or destination conflict.
-- Avoid simultaneous installs/migrations. The FNSPM operation lock coordinates
-  migration/restoration, not other package managers or cloud clients.
+- FNSPM holds operation locks while restoring, running the native command, and
+  converting dependencies. Local dependency-changing commands are protected even
+  when automatic conversion is disabled. Workspace sections also lock their
+  shared root, including roots not yet migrated. Concurrent or nested FNSPM
+  commands targeting that scope fail promptly before another manager starts;
+  independent projects remain independent. Global, redirected, help/version, and
+  dry-run native commands retain their existing exclusions. Direct package
+  manager invocations and cloud clients do not participate in these locks.
 - Restore dependencies before moving/renaming a project or changing storage to
   another device. Absolute links pointing into the storage must be changed to
   relative links before restoration. Recorded ownership and absolute external paths are local to
@@ -209,7 +251,7 @@ npm ci
 npm run check
 npm test
 npm run test:package
-npm run test:managers -- npm bun pnpm  # optional; each manager must be on PATH
+npm run test:managers -- npm yarn pnpm bun deno  # each manager must be on PATH
 npm run format:check
 npm audit
 ```
@@ -221,6 +263,22 @@ CLI and declarations automatically. Importing `fnspm` does not execute the CLI.
 CI runs on Node 22/24 across macOS, Linux, and Windows. Cloud-provider behavior is
 not part of automated tests, and command forwarding is not a promise that every
 historical package manager version shares the same dependency layout.
+
+Native tests cover all five managers, repeat and locked installations, upgrades
+from legacy links, workspace sections, restoration, Yarn PnP, and cache-only Deno.
+They use local archives and a private localhost fixture registry; project
+dependencies are not downloaded from the public npm registry. CI installs the
+pinned manager versions recorded in its workflow before running these scenarios.
+
+## Compatibility for 1.0
+
+The supported public interface consists of the documented CLI commands/options,
+configuration fields and resolution rules, and top-level exported types and
+`main` function. Existing 0.3 CJS/ESM configs, section overrides, native argument
+forwarding, exit codes, and local auto-conversion remain supported. Internal
+`dist/src` modules and operation metadata are implementation details; `migrate`,
+`restore`, and `doctor` manage that metadata. Breaking public-interface changes
+after 1.0 require a new major version.
 
 ## License and contributing
 

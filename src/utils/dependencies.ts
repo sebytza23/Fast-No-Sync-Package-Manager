@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Config } from './types';
+import { LOCK_FILE, withOperationLock } from './operation-lock';
+export { LOCK_FILE } from './operation-lock';
 
 export const STATE_FILE = '.fnspm-state.json';
-export const LOCK_FILE = '.fnspm-operation.lock';
 interface MigrationState {
     version: 1;
     root: string;
@@ -152,31 +153,7 @@ function createLink(source: string, target: string): void {
 }
 
 function withLock<T>(root: string, operation: () => T): T {
-    const file = path.join(root, LOCK_FILE);
-    let handle: number;
-    try {
-        handle = fs.openSync(file, 'wx', 0o600);
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
-            throw new Error(
-                `Another dependency operation may be running. If it was interrupted, inspect ${LOCK_FILE} before removing it.`,
-            );
-        }
-        throw error;
-    }
-    try {
-        fs.writeFileSync(
-            handle,
-            JSON.stringify({
-                pid: process.pid,
-                startedAt: new Date().toISOString(),
-            }) + '\n',
-        );
-        return operation();
-    } finally {
-        fs.closeSync(handle);
-        fs.unlinkSync(file);
-    }
+    return withOperationLock(root, operation);
 }
 
 export function gitIgnoreRules(root: string, config: Config): string[] {
@@ -196,7 +173,11 @@ export function gitIgnoreRules(root: string, config: Config): string[] {
     ];
 }
 
-export function addToGitIgnore(root: string, config: Config): void {
+export function addToGitIgnore(
+    root: string,
+    config: Config,
+    dryRun = false,
+): string[] {
     const file = path.join(root, '.gitignore');
     const stats = lstat(file);
     if (stats && (!stats.isFile() || stats.isSymbolicLink()))
@@ -206,12 +187,48 @@ export function addToGitIgnore(root: string, config: Config): void {
     const missing = gitIgnoreRules(root, config).filter(
         (rule) => !lines.has(rule),
     );
-    if (!missing.length) return;
+    if (!missing.length || dryRun) return missing;
     const newline = content.includes('\r\n') ? '\r\n' : '\n';
     fs.appendFileSync(
         file,
         `${content && !content.endsWith('\n') ? newline : ''}${newline}# FNSPM local dependencies${newline}${missing.join(newline)}${newline}`,
     );
+    return missing;
+}
+
+/** Only repair entries whose ownership and directory identity are still provable. */
+export function repairDependencies(
+    root: string,
+    dryRun = false,
+): string | undefined {
+    root = fs.realpathSync(root);
+    const state = readState(root);
+    if (!state) return undefined;
+    const source = path.join(root, 'node_modules');
+    const stats = lstat(source);
+    if (!stats && ownedTarget(state)) {
+        const message = `Recover recorded link: ${source} -> ${state.target}`;
+        if (dryRun) return `[dry-run] ${message}`;
+        return withLock(root, () => {
+            // Validate ownership again under the mutation lock.
+            const current = readState(root);
+            if (
+                !current ||
+                current.target !== state.target ||
+                !ownedTarget(current) ||
+                lstat(source)
+            )
+                throw new Error(
+                    'Storage changed while preparing recovery; inspect with fnspm doctor.',
+                );
+            createLink(source, current.target);
+            return message;
+        });
+    }
+    const restorePlan = restoreDependencies(root, true);
+    if (stats?.isDirectory() && !lstat(state.target))
+        return dryRun ? restorePlan : restoreDependencies(root);
+    return undefined;
 }
 
 export function migrateDependencies(

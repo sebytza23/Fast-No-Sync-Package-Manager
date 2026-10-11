@@ -21,9 +21,26 @@ export function detectPackageManager(
     root: string,
     config: Config,
 ): PackageManagerType {
+    return describePackageManager(root, config).name;
+}
+
+export function describePackageManager(
+    root: string,
+    config: Config,
+    override?: PackageManagerType,
+): { name: PackageManagerType; reason: string } {
+    if (override) return { name: override, reason: 'CLI --pm override' };
     const { detection, default: fallback } = config.packageManager;
-    if (detection === 'default') return fallback;
-    if (detection !== 'auto') return detection;
+    if (detection === 'default')
+        return {
+            name: fallback,
+            reason: 'configured packageManager.default (detection: default)',
+        };
+    if (detection !== 'auto')
+        return {
+            name: detection,
+            reason: 'configured packageManager.detection',
+        };
     const declared = readPackageJson(root).packageManager;
     if (declared !== undefined) {
         if (typeof declared !== 'string')
@@ -33,18 +50,25 @@ export function detectPackageManager(
             throw new Error(
                 `Unsupported packageManager: ${declared}; use --pm to override.`,
             );
-        return manager;
+        return {
+            name: manager,
+            reason: `package.json#packageManager: ${declared}`,
+        };
     }
     const candidates = lockfileManagers(root);
     if (candidates.length > 1)
         throw new Error(
             `Multiple package managers detected (${candidates.join(', ')}); set package.json#packageManager or use --pm.`,
         );
-    return (
-        candidates[0] ??
-        (fs.existsSync(path.join(root, 'deno.json')) ||
+    if (candidates[0])
+        return { name: candidates[0], reason: 'project lockfile' };
+    if (
+        fs.existsSync(path.join(root, 'deno.json')) ||
         fs.existsSync(path.join(root, 'deno.jsonc'))
-            ? 'deno'
-            : fallback)
-    );
+    )
+        return { name: 'deno', reason: 'Deno configuration' };
+    return {
+        name: fallback,
+        reason: 'configured fallback (no manifest manager or lockfile)',
+    };
 }

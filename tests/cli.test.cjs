@@ -13,6 +13,83 @@ const {
     directoryLink,
 } = require('./support.cjs');
 const { parseRunArgs, shouldAutoMigrate } = require('../dist/src/utils/cli.js');
+const { isDependencyCommand } = require('../dist/src/utils/cli.js');
+
+test('native options before install commands retain dependency-operation protection', () => {
+    for (const [manager, args] of [
+        ['npm', ['--silent', '--workspace', 'web', 'ci']],
+        ['npm', ['-w', 'web', 'install']],
+        ['npm', ['--omit', 'dev', 'ci']],
+        ['npm', ['-m', 'foo', 'ci']],
+        ['npm', ['--m', 'foo', 'ci']],
+        ['npm', ['-sm', 'foo', 'ci']],
+        ['npm', ['-reg', 'https://registry.npmjs.org/', 'ci']],
+        ['npm', ['-enjoy-by', '2026-10-01', 'ci']],
+        ['npm', ['-omit', 'dev', 'ci']],
+        ['npm', ['-global=false', 'ci']],
+        ['npm', ['--g=false', 'ci']],
+        ['npm', ['-dry-run=false', 'ci']],
+        ['npm', ['--global', '-local', 'ci']],
+        ['npm', ['-L', 'project', 'ci']],
+        ['npm', ['--reg', 'https://registry.npmjs.org/', 'ci']],
+        ['npm', ['--enjoy-by', '2026-10-01', 'ci']],
+        ['npm', ['--global', '--local', 'ci']],
+        ['npm', ['-g=false', 'ci']],
+        ['npm', ['--local=true', 'ci']],
+        ['npm', ['--tag', '--global', 'ci']],
+        ...[
+            'ic',
+            'install-clean',
+            'isntall-clean',
+            'install-cl',
+            'cit',
+            'sit',
+            'install-ci-test',
+            'installTest',
+            'ddp',
+            'unlink',
+            'udpate',
+        ].map((command) => ['npm', [command]]),
+        ['npm', ['--include', 'optional', 'ci']],
+        ['npm', ['--tag', 'install', 'ci']],
+        ['npm', ['--before', '2026-10-01', 'ci']],
+        ['npm', ['--install-strategy', 'hoisted', 'ci']],
+        ['npm', ['--fetch-retries', '2', 'ci']],
+        ['npm', ['--ignore-scripts', 'true', 'ci']],
+        ['npm', ['--color', 'always', 'ci']],
+        ['npm', ['--global=false', 'ci']],
+        ['npm', ['--dry-run=false', 'ci']],
+        ['npm', ['--global', 'false', 'ci']],
+        ['npm', ['--dry-run', 'false', 'ci']],
+        ['npm', ['--global', '--global=false', 'ci']],
+        ['npm', ['--dry-run', '--no-dry-run', 'ci']],
+        ['pnpm', ['--filter', 'web', 'install']],
+        ['pnpm', ['-w', 'install']],
+        ['pnpm', ['recursive', 'install']],
+        ['yarn', ['workspace', 'web', 'add', 'example']],
+    ])
+        assert.equal(isDependencyCommand(args, manager), true);
+    for (const [manager, args] of [
+        ['npm', ['--workspace', 'install', 'run', 'build']],
+        ['npm', ['run', 'install']],
+        ['npm', ['exec', 'install']],
+        ['npm', ['--tag', 'ci', 'run', 'install']],
+        ['npm', ['--global=true', 'ci']],
+        ['npm', ['--local', '--global', 'ci']],
+        ['npm', ['--local=false', 'ci']],
+        ['npm', ['-gm', 'foo', 'ci']],
+        ['npm', ['--global', '--no-local', 'ci']],
+        ['npm', ['--local', 'false', 'ci']],
+        ['npm', ['install-c']],
+        ['npm', ['runScript', 'install']],
+        ['npm', ['--dry-run', 'true', 'ci']],
+        ['npm', ['--global=false', '--global', 'ci']],
+        ['npm', ['--no-global=false', 'ci']],
+        ['pnpm', ['--filter', 'install', 'list']],
+        ['pnpm', ['install', '--global']],
+    ])
+        assert.equal(isDependencyCommand(args, manager), false);
+});
 
 test('preserve spaces and shell metacharacters literally', (t) => {
     const root = fixture(t);

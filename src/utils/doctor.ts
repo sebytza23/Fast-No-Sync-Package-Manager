@@ -3,12 +3,14 @@ import path from 'node:path';
 import spawn from 'cross-spawn';
 import {
     dependencyTarget,
-    gitIgnoreRules,
     lstat,
     LOCK_FILE,
     STATE_FILE,
     restoreDependencies,
+    repairDependencies,
+    addToGitIgnore,
 } from './dependencies';
+import { withOperationLock } from './operation-lock';
 import { detectPackageManager, lockfileManagers } from './detection';
 import type { Config, PackageManagerType } from './types';
 
@@ -17,6 +19,7 @@ export function doctor(
     config: Config,
     override?: PackageManagerType,
     managerRoot = root,
+    options: { fix?: boolean; dryRun?: boolean } = {},
 ): number {
     const lines: string[] = [`Project: ${root}`];
     let failures = 0;
@@ -24,6 +27,38 @@ export function doctor(
         lines.push(`ERROR: ${text}`);
         failures++;
     };
+    if (options.fix) {
+        try {
+            const repair = () => {
+                const storagePlan = repairDependencies(root, true);
+                const missing =
+                    config.symlink.enabled && config.symlink.addToGitIgnore
+                        ? addToGitIgnore(root, config, true)
+                        : [];
+                // All preflight checks happen before either repair writes anything.
+                if (storagePlan)
+                    lines.push(
+                        options.dryRun
+                            ? storagePlan
+                            : repairDependencies(root)!,
+                    );
+                if (missing.length) {
+                    if (!options.dryRun) addToGitIgnore(root, config);
+                    lines.push(
+                        `${options.dryRun ? '[dry-run] Would add' : 'Added'} .gitignore rules: ${missing.join(', ')}`,
+                    );
+                }
+                if (!storagePlan && !missing.length)
+                    lines.push('No safe repairs needed.');
+            };
+            if (options.dryRun) repair();
+            else withOperationLock(root, repair);
+        } catch (error) {
+            problem(
+                `Repair refused: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
+    }
     try {
         const manager = override ?? detectPackageManager(managerRoot, config);
         const result = spawn.sync(manager, ['--version'], {
@@ -84,26 +119,36 @@ export function doctor(
         try {
             restoreDependencies(root, true);
             lines.push('Migration state: valid; restoration available');
+            const recovery = repairDependencies(root, true);
+            if (recovery) {
+                problem('Recorded storage needs recovery.');
+                lines.push(
+                    `Next step: fnspm doctor --fix --dry-run\n${recovery}`,
+                );
+            }
         } catch (error) {
             problem(error instanceof Error ? error.message : String(error));
+            lines.push(
+                'Inspect the recorded state and dependency paths before recovery; FNSPM will not overwrite or delete conflicting directories.',
+            );
         }
     }
     if (lstat(path.join(root, LOCK_FILE)))
         problem(
-            `Operation lock exists: ${LOCK_FILE}. Check for a running process before removing it.`,
+            `Operation lock exists: ${LOCK_FILE}. Check its pid and startedAt, and confirm that the process is no longer running before manually removing only the lock file.`,
         );
     if (config.symlink.enabled && config.symlink.addToGitIgnore) {
-        const ignore = path.join(root, '.gitignore');
-        const content = fs.existsSync(ignore)
-            ? fs.readFileSync(ignore, 'utf8').split(/\r?\n/)
-            : [];
-        const missing = gitIgnoreRules(root, config).filter(
-            (rule) => !content.includes(rule),
-        );
-        if (missing.length)
-            lines.push(
-                `WARNING: Missing .gitignore rules: ${missing.join(', ')} (added during migration)`,
-            );
+        try {
+            const missing = addToGitIgnore(root, config, true);
+            if (missing.length) {
+                lines.push(
+                    `WARNING: Missing .gitignore rules: ${missing.join(', ')} (added during migration)`,
+                );
+                lines.push('Next step: fnspm doctor --fix --dry-run');
+            }
+        } catch (error) {
+            problem(error instanceof Error ? error.message : String(error));
+        }
     }
     console.info(lines.join('\n'));
     return failures ? 1 : 0;

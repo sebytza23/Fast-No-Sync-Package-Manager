@@ -1,7 +1,7 @@
 {
     "name": "fnspm",
     "type": "commonjs",
-    "version": "0.3.0",
+    "version": "1.0.0",
     "devDependencies": {
         "@types/cross-spawn": "^6.0.6",
         "@types/node": "^22.0.0",
