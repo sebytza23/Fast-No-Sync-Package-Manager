@@ -34,6 +34,7 @@ fnspm --relocate --external --dry-run # preview moving tracked storage
 
 fnspm install                       # auto-detect the project's manager
 fnspm --pm npm install lodash --save-dev
+fnspm --pm npm --omit dev ci          # native options before a clean install
 fnspm --pm yarn add lodash
 fnspm --pm pnpm add lodash
 fnspm --pm bun add lodash
