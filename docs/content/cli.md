@@ -17,6 +17,29 @@ fnspm --pm npm run build -- --debug
 
 The first command enables FNSPM diagnostics. The second forwards `--debug` to the native script. Quoted arguments retain their boundaries; FNSPM does not concatenate them into an application-generated shell command.
 
+## Native dependency commands and managed storage
+
+Native options may precede the command. npm configuration values, option shorthands,
+and dependency-command aliases retain their native meaning:
+
+```sh
+fnspm --pm npm --omit dev ci
+fnspm --pm npm --reg https://registry.npmjs.org/ ci
+fnspm --pm npm ic
+fnspm --pm npm --global=false ci
+```
+
+For local dependency operations, FNSPM restores tracked dependencies to their native
+layout before starting the manager. After a successful command, it converts them
+again when automatic conversion is enabled. This also protects clean installs
+invoked through npm aliases such as `ic` or `install-clean`.
+
+An explicit `--global=false` or `--dry-run=false` keeps an npm operation eligible
+for local conversion. npm's final global/local setting applies, so `--global
+--local ci` performs a local clean install. Enabled global or dry-run options,
+redirected directories such as `--prefix`, and native help/version requests keep
+their conversion exclusions. Arguments after `--` remain native arguments.
+
 ## help and version
 
 ```sh
