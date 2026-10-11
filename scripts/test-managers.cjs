@@ -257,6 +257,37 @@ async function main() {
                 ['install'],
                 ['install'],
                 lockedInstall(manager),
+                ...(manager === 'npm'
+                    ? [
+                          ['--omit', 'dev', 'ci'],
+                          ['-m', 'foo', 'ci'],
+                          ['--m', 'foo', 'ci'],
+                          ['-sm', 'foo', 'ci'],
+                          ['-reg', 'https://registry.npmjs.org/', 'ci'],
+                          ['-enjoy-by', '2026-10-01', 'ci'],
+                          ['-omit', 'dev', 'ci'],
+                          ['-global=false', 'ci'],
+                          ['--g=false', 'ci'],
+                          ['-dry-run=false', 'ci'],
+                          ['--global', '-local', 'ci'],
+                          ['-L', 'project', 'ci'],
+                          ['--reg', 'https://registry.npmjs.org/', 'ci'],
+                          ['--enjoy-by', '2026-10-01', 'ci'],
+                          ['--global', '--local', 'ci'],
+                          ['-g=false', 'ci'],
+                          ['ic'],
+                          ['install-clean'],
+                          ['isntall-clean'],
+                          ['install-cl'],
+                          ['--include', 'optional', 'ci'],
+                          ['--tag', 'install', 'ci'],
+                          ['--install-strategy', 'hoisted', 'ci'],
+                          ['--global=false', 'ci'],
+                          ['--dry-run=false', 'ci'],
+                          ['--global', 'false', 'ci'],
+                          ['--dry-run', 'false', 'ci'],
+                      ]
+                    : []),
             ]) {
                 command(
                     process.execPath,
@@ -267,7 +298,7 @@ async function main() {
                     fs
                         .lstatSync(path.join(root, 'node_modules'))
                         .isSymbolicLink(),
-                    `${manager}: no migrated link`,
+                    `${manager} ${args.join(' ')}: no migrated link`,
                 );
                 command(
                     process.execPath,
